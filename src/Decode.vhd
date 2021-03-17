@@ -30,6 +30,7 @@ begin
 
     decode_proc: process (clock, f_reset)
         -- Variables
+        variable var_opcode : std_logic_vector(5 downto 0);
     begin
         if (f_reset = '1') or (now < 1 ps) then
             -- Either starting up or a branch was taken so the pipeline must be flushed
