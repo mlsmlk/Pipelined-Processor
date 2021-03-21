@@ -1,0 +1,26 @@
+LIBRARY ieee;
+USE ieee.std_logic_1164.all;
+USE ieee.numeric_std.all;
+
+entity data_memory is
+	generic(
+		ram_size : integer:= 32768;
+		mem_delay : time := 10 ns;
+		clock_period : time := 1 ns
+	);
+	port(
+		clk: in std_logic;
+		writedata: in std_logic_vector (31 downto 0);		--data from deocde needs to be written
+		address:in std_logic_vector (31 downto 0);		-- ALU result
+	
+		readdata: : out std_logic_vector (31 downto 0);		-- forward read data to write back stage
+		mem_flag: out std_logic;				-- MUX flag (1- read mem, 0-read ALU result)
+	);
+end data_memory;
+
+architecture mem of data_memory is
+begin
+	mem_process: process(clk)
+	begin
+	end mem_process	
+end mem
