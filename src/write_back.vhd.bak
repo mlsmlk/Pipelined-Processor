@@ -24,7 +24,7 @@ begin
 			when '1' => --If flag is 1 then MUX takes the data in 1, so the result of main memory will be written back
 				write_data <= mem_res;
 			when others =>
-				write_data <= "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+				write_data <= "";
 		end case;
         end if;
 end process;

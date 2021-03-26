@@ -49,7 +49,7 @@ case state is
 			mem_flag <='1';
 			state <= mm_write;		-- switch to cache write state
 		else				--If the request is else
-			mem_flag <='0';
+			mem_flag ='0';
 			state <= idle;			-- stay in idle state
 		end if;	
 
