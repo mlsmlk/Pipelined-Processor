@@ -8,19 +8,18 @@ entity decode is
         -- Clock
         clock : in std_logic;
         -- From the Fetch stage
-        f_instruction : in std_logic_vector(31 downto 0);
-        f_reset : in std_logic;
+        f_instruction : in std_logic_vector(31 downto 0); -- The instruction to be parsed
+        f_reset : in std_logic; -- Reset flag
         -- From the Writeback stage
-        w_regdata : in std_logic_vector(31 downto 0);
+        w_regdata : in std_logic_vector(31 downto 0); -- Data to be written back to a register
 
         --- OUTPUTS ---
         -- To the Execute stage
-        e_readdata1 : out std_logic_vector(31 downto 0);
-        e_readdata2 : out std_logic_vector(31 downto 0);
-        e_se_ivalue : out std_logic_vector(31 downto 0);
-        e_opcode : out std_logic_vector(5 downto 0);
-        e_forward : out std_logic; -- Also to be forwarded to the memory stage
-        e_readwrite : out std_logic_vector(1 downto 0) -- "01" = read, "10" = write, "00" = neither
+        e_opcode : out std_logic_vector(5 downto 0); -- Parse and forward the op code
+        e_readdata1 : out std_logic_vector(31 downto 0); -- Data 1 (from register)
+        e_readdata2 : out std_logic_vector(31 downto 0); -- Data 2 (from register)
+        e_se_ivalue : out std_logic_vector(31 downto 0); -- Immediate value
+        e_forward : out std_logic -- Also to be forwarded to the memory stage
     );
 end decode;
 
