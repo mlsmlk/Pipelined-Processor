@@ -83,11 +83,12 @@ begin
         -- Create an alias of the register file to allow the register file to be changed within CC
         registers_var := registers;
 
+        -- Either starting up or a branch was taken so the pipeline must be flushed
         if (f_reset = '1') or (now < 1 ps) then
-            -- Either starting up or a branch was taken so the pipeline must be flushed
             -- Set register 0 to have a value of 0
             registers(0) <= 0;
 
+        -- Process incoming instruction
         elsif (rising_edge(clock)) then
             -- Perform a writeback operation if necessary
             if (wb_queue(wb_queue_idx) /= 0) then
@@ -104,9 +105,26 @@ begin
                 reg_d_idx := to_integer(unsigned(f_instruction(15 downto 11)));
                 shamt := f_instruction(10 downto 6);
                 funct := f_instruction(5 downto 0);
+                -- Use funct as the opcode
+                sig_opcode <= funct;
+                -- For all instructions other than jump register, set Rd as writeback
+                if (funct /= "001000") then
+                    wb_queue(wb_queue_idx) <= reg_d_idx;
+                else
+                    wb_queue(wb_queue_idx) <= 0;
+                end if;
+                -- If the instruction is a shift, use shamt instead of Rs for readdata1
+                if (funct = "000000" or funct = "000010" or funct = "000011") then
+                    sig_readdata1 <= std_logic_vector(resize(unsigned(shamt), 32));
+                else
+                    sig_readdata1 <= registers_var(reg_s_idx);
+                end if;
+                -- Set Rt to be the other output
+                sig_readdata2 <= registers_var(reg_t_idx);
             elsif (opcode = "000011" or opcode = "000010") then
                 -- J-type instruction
                 sig_insttype <= "10";
+                sig_opcode <= opcode;
                 address := f_instruction(25 downto 0);
                 -- If jump and link, update the link register with PC + 8
                 if (opcode = "000011") then
@@ -114,9 +132,12 @@ begin
                 end if;
                 -- Extend the address to 32 bits and output it through readdata1
                 sig_readdata1 <= std_logic_vector(resize(unsigned(address), 32));
+                -- No write back for J-type instructions
+                wb_queue(wb_queue_idx) <= 0;
             else
                 -- I-type instruction
                 sig_insttype <= "01";
+                sig_opcode <= opcode;
                 reg_s_idx := to_integer(unsigned(f_instruction(25 downto 21)));
                 reg_t_idx := to_integer(unsigned(f_instruction(20 downto 16)));
                 imm := f_instruction(15 downto 0);
@@ -138,13 +159,29 @@ begin
                 -- Add writeback register to queue, if there is one
                 if (opcode /= "000100" and opcode /= "000101" and opcode /= "101011") then
                     wb_queue(wb_queue_idx) <= reg_t_idx;
+                else
+                    wb_queue(wb_queue_idx) <= 0;
                 end if;
                 -- Output the Rs value
                 sig_readdata1 <= registers_var(reg_s_idx);
+            end if;
+
+            -- Increment the write back index
+            if (wb_queue_idx = 2) then
+                wb_queue_idx = 0;
+            else
+                wb_queue_idx = wb_queue_idx + 1;
             end if;
         end if;
 
         -- Update the true register file with the temporary register file
         registers <= registers_var;
     end process;
+
+    -- Assign registers to outputs
+    e_insttype  <= sig_insttype;
+    e_opcode    <= sig_opcode;
+    e_readdata1 <= sig_readdata1;
+    e_readdata2 <= sig_readdata2;
+    e_imm       <= sig_imm;
 end arch;
