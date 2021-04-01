@@ -5,21 +5,34 @@ use ieee.numeric_std.all;
 entity decode is
     port(
         --- INPUTS ---
-        -- Clock
+        -- Clock --
         clock : in std_logic;
-        -- From the Fetch stage
-        f_instruction : in std_logic_vector(31 downto 0); -- The instruction to be parsed
-        f_reset : in std_logic; -- Reset flag
-        -- From the Writeback stage
-        w_regdata : in std_logic_vector(31 downto 0); -- Data to be written back to a register
+
+        -- From the Fetch stage --
+        -- The instruction to be parsed
+        f_instruction : in std_logic_vector(31 downto 0);
+        -- Reset flag
+        f_reset : in std_logic;
+
+        -- From the Writeback stage --
+        -- Data to be written back to a register
+        w_regdata : in std_logic_vector(31 downto 0);
 
         --- OUTPUTS ---
-        -- To the Execute stage
-        e_opcode : out std_logic_vector(5 downto 0); -- Parse and forward the op code
-        e_readdata1 : out std_logic_vector(31 downto 0); -- Data 1 (from register)
-        e_readdata2 : out std_logic_vector(31 downto 0); -- Data 2 (from register)
-        e_se_ivalue : out std_logic_vector(31 downto 0); -- Immediate value
-        e_forward : out std_logic -- Also to be forwarded to the memory stage
+        -- To the Execute stage --
+        -- Instruction type
+        -- "00" = R-type || "01" = I-type || "10" == J-type
+        e_insttype : out std_logic_vector(1 downto 0);
+        -- opcode for I-type and J-type, or funct for R-type
+        e_opcode : out std_logic_vector(5 downto 0);
+        -- Data 1
+        e_readdata1 : out std_logic_vector(31 downto 0);
+        -- Data 2
+        e_readdata2 : out std_logic_vector(31 downto 0);
+        -- Extended immediate value
+        e_signext_imm : out std_logic_vector(31 downto 0);
+        -- Signal to execute or memory stage to forward a value
+        e_forward : out std_logic
     );
 end decode;
 
@@ -36,20 +49,30 @@ architecture arch of decode is
     signal registers: register_file;
     -- For writing back
     signal wb_queue: writeback_queue; -- Stores which register will be written back to next
-    signal wb_queue_idx: natural range 0 to 2 := 0;
+    signal wb_queue_idx : natural range 0 to 2 := 0;
+    -- Output registers
+    signal sig_insttype : std_logic_vector(1 downto 0);
+    signal sig_signext_imm : std_logic_vector(31 downto 0);
 begin
 
     decode_proc: process (clock, f_reset)
         ----- VARIABLES -----
         -- Replica of the register file to help simplify the write back process
         variable registers_var : register_file;
-        -- Parts of the instruction
+        -- General instruction components
         variable opcode : std_logic_vector(5 downto 0);
-        variable reg1_idx : natural range 0 to NUM_REGISTERS - 1; -- Operand register 1 index
-        variable reg1_data : std_logic_vector(31 downto 0); -- Operand register 1 data
-        variable reg2_idx : natural range 0 to NUM_REGISTERS - 1; -- Operand register 2 index
-        variable reg2_data : std_logic_vector(31 downto 0); -- Operand register 2 data
+        variable reg_s_idx : natural range 0 to NUM_REGISTERS - 1; -- First operand register index
+        variable reg_s_data : std_logic_vector(31 downto 0); -- First operand register data
+        variable reg_t_idx : natural range 0 to NUM_REGISTERS - 1; -- Second operand register index
+        variable reg_t_data : std_logic_vector(31 downto 0); -- Second operand register data
+        -- R-type instruction components
+        variable reg_d_idx : natural range 0 to NUM_REGISTERS - 1; -- Destination register index
+        variable shamt : std_logic_vector(4 downto 0); -- Used for shift operations
+        variable funct : std_logic_vector(4 downto 0); -- Specifies the operation to perform
+        -- I-type instruction components
         variable imm : std_logic_vector(15 downto 0); -- Immediate value
+        -- J-type instruction components
+        variable 
     begin
         -- Create an alias of the register file to allow the register file to be changed within CC
         registers_var := registers;
@@ -63,25 +86,50 @@ begin
             -- Perform a writeback operation if necessary
             if (wb_queue(wb_queue_idx) /= 0) then
                 registers(wb_queue(wb_queue_idx)) <= w_regdata;
-                -- Increase the circular index
-                if (wb_queue_idx == 2) then
-                    wb_queue_idx <= 0;
-                else
-                    wb_queue_idx <= wb_queue_idx + 1;
-                end if;
             end if;
 
-            -- Parse the instruction
+            -- Identify the type of the instruction
             opcode := f_instruction(31 downto 26);
-            reg1_idx := to_integer(unsigned(f_instruction(25 downto 21)));
-            reg2_idx := to_integer(unsigned(f_instruction(20 downto 16)));
-            imm := f_instruction(15 downto 0);
-
-            -- Load the data from the appropriate registers
-            reg1_data := registers_var(reg1_idx);
-            reg2_data := registers_var(reg2_idx);
-
-            -- Add the target register to the queue
+            if (opcode = "00000") then
+                -- R-type instruction
+                sig_insttype <= "00";
+                reg_s_idx := to_integer(unsigned(f_instruction(25 downto 21)));
+                reg_t_idx := to_integer(unsigned(f_instruction(20 downto 16)));
+                reg_d_idx := to_integer(unsigned(f_instruction(15 downto 11)));
+                shamt := f_instruction(10 downto 6);
+                funct := f_instruction(5 downto 0);
+            elsif (opcode = "000011" or opcode = "000010") then
+                -- J-type instruction
+                sig_insttype <= "10";
+                -- Not sure what to do here yet...................
+            else
+                -- I-type instruction
+                sig_insttype <= "01";
+                reg_s_idx := to_integer(unsigned(f_instruction(25 downto 21)));
+                reg_t_idx := to_integer(unsigned(f_instruction(20 downto 16)));
+                imm := f_instruction(15 downto 0);
+                -- Extend the immediate value
+                case (opcode) is
+                    when "001111" =>
+                        -- Upper immediate shift
+                        sig_signext_imm <= std_logic_vector(shift_left(resize(unsigned(imm), 32), 16));
+                    when "000100" or "000101" =>
+                        -- Address extend
+                        sig_signext_imm <= std_logic_vector(shift_left(resize(signed(imm), 32), 2));
+                    when "001100" or "001101" or "001110" =>
+                        -- Zero extend
+                        sig_signext_imm <= std_logic_vector(resize(unsigned(imm), 32));
+                    when others =>
+                        -- Sign extend
+                        sig_signext_imm <= std_logic_vector(resize(signed(imm), 32));
+                end case;
+                -- Add writeback register to queue, if there is one
+                if (opcode /= "000100" and opcode /= "000101" and opcode /= "101011") then
+                    wb_queue(wb_queue_idx) <= reg_t_idx;
+                end if;
+                -- Load the Rs value
+                reg_s_data := registers_var(reg_s_idx);
+            end if;
         end if;
 
         -- Update the true register file with the temporary register file
