@@ -83,10 +83,15 @@ begin
         -- Create an alias of the register file to allow the register file to be changed within CC
         registers_var := registers;
 
-        -- Either starting up or a branch was taken so the pipeline must be flushed
+        -- Either starting up or a branch was taken, so the pipeline must be flushed
         if (f_reset = '1') or (now < 1 ps) then
             -- Set register 0 to have a value of 0
             registers(0) <= 0;
+            -- Clear the queue
+            for i in 0 to 2 loop
+				wb_queue(i) <= 0;
+			end loop;
+            wb_queue_idx <= 0;
 
         -- Process incoming instruction
         elsif (rising_edge(clock)) then
