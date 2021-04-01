@@ -13,6 +13,8 @@ entity decode is
         f_instruction : in std_logic_vector(31 downto 0);
         -- Reset flag
         f_reset : in std_logic;
+        -- PC + 4
+        f_pcplus4 : in std_logic_vector(31 downto 0);
 
         -- From the Writeback stage --
         -- Data to be written back to a register
@@ -30,7 +32,7 @@ entity decode is
         -- Data 2
         e_readdata2 : out std_logic_vector(31 downto 0);
         -- Extended immediate value
-        e_signext_imm : out std_logic_vector(31 downto 0);
+        e_imm : out std_logic_vector(31 downto 0);
         -- Signal to execute or memory stage to forward a value
         e_forward : out std_logic
     );
@@ -38,7 +40,8 @@ end decode;
 
 architecture arch of decode is
     ----- CONSTANTS -----
-    constant NUM_REGISTERS: natural := 32;
+    constant NUM_REGISTERS : natural := 32;
+    constant LR_IDX : natural := 31; -- Link register index
 
     ----- TYPE DEFINITIONS -----
     type writeback_queue is array(0 to 2) of natural range 0 to NUM_REGISTERS - 1;
@@ -52,7 +55,10 @@ architecture arch of decode is
     signal wb_queue_idx : natural range 0 to 2 := 0;
     -- Output registers
     signal sig_insttype : std_logic_vector(1 downto 0);
-    signal sig_signext_imm : std_logic_vector(31 downto 0);
+    signal sig_opcode : std_logic_vector(5 downto 0);
+    signal sig_readdata1 : std_logic_vector(31 downto 0);
+    signal sig_readdata2 : std_logic_vector(31 downto 0);
+    signal sig_imm : std_logic_vector(31 downto 0);
 begin
 
     decode_proc: process (clock, f_reset)
@@ -72,7 +78,7 @@ begin
         -- I-type instruction components
         variable imm : std_logic_vector(15 downto 0); -- Immediate value
         -- J-type instruction components
-        variable 
+        variable address : std_logic_vector(25 downto 0); -- Address for jump instruction
     begin
         -- Create an alias of the register file to allow the register file to be changed within CC
         registers_var := registers;
@@ -101,7 +107,13 @@ begin
             elsif (opcode = "000011" or opcode = "000010") then
                 -- J-type instruction
                 sig_insttype <= "10";
-                -- Not sure what to do here yet...................
+                address := f_instruction(25 downto 0);
+                -- If jump and link, update the link register with PC + 8
+                if (opcode = "000011") then
+                    registers_var(LR_IDX) := std_logic_vector(unsigned(f_pcplus4) + 4);
+                end if;
+                -- Extend the address to 32 bits and output it through readdata1
+                sig_readdata1 <= std_logic_vector(resize(unsigned(address), 32));
             else
                 -- I-type instruction
                 sig_insttype <= "01";
@@ -112,23 +124,23 @@ begin
                 case (opcode) is
                     when "001111" =>
                         -- Upper immediate shift
-                        sig_signext_imm <= std_logic_vector(shift_left(resize(unsigned(imm), 32), 16));
+                        sig_imm <= std_logic_vector(shift_left(resize(unsigned(imm), 32), 16));
                     when "000100" or "000101" =>
                         -- Address extend
-                        sig_signext_imm <= std_logic_vector(shift_left(resize(signed(imm), 32), 2));
+                        sig_imm <= std_logic_vector(shift_left(resize(signed(imm), 32), 2));
                     when "001100" or "001101" or "001110" =>
                         -- Zero extend
-                        sig_signext_imm <= std_logic_vector(resize(unsigned(imm), 32));
+                        sig_imm <= std_logic_vector(resize(unsigned(imm), 32));
                     when others =>
                         -- Sign extend
-                        sig_signext_imm <= std_logic_vector(resize(signed(imm), 32));
+                        sig_imm <= std_logic_vector(resize(signed(imm), 32));
                 end case;
                 -- Add writeback register to queue, if there is one
                 if (opcode /= "000100" and opcode /= "000101" and opcode /= "101011") then
                     wb_queue(wb_queue_idx) <= reg_t_idx;
                 end if;
-                -- Load the Rs value
-                reg_s_data := registers_var(reg_s_idx);
+                -- Output the Rs value
+                sig_readdata1 <= registers_var(reg_s_idx);
             end if;
         end if;
 
