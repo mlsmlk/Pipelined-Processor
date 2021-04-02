@@ -65,26 +65,26 @@ begin
     dec : decode
     port map(
         -- Inputs
-        clock => clock;
-        f_instruction => f_instruction;
-        f_reset => f_reset;
-        f_pcplus4 => f_pcplus4;
-        w_regdata => w_regdata;
+        clock => clock,
+        f_instruction => f_instruction,
+        f_reset => f_reset,
+        f_pcplus4 => f_pcplus4,
+        w_regdata => w_regdata,
         -- Outputs
-        e_insttype => e_insttype;
-        e_opcode => e_opcode;
-        e_readdata1 => e_readdata1;
-        e_readdata2 => e_readdata2;
-        e_imm => e_imm;
+        e_insttype => e_insttype,
+        e_opcode => e_opcode,
+        e_readdata1 => e_readdata1,
+        e_readdata2 => e_readdata2,
+        e_imm => e_imm,
         e_forward => e_forward
     );
 
     -- Drive the clock
     clk_process : process
     begin
-        clock <= '0';
-        wait for clock_period/2;
         clock <= '1';
+        wait for clock_period/2;
+        clock <= '0';
         wait for clock_period/2;
     end process;
 
@@ -93,9 +93,9 @@ begin
         variable pc : unsigned(31 downto 0) := (others => '0');
     begin
         report "Starting Decode test bench";
-        reset <= '1';
+        f_reset <= '1';
         wait for clock_period;
-        reset <= '0';
+        f_reset <= '0';
 
         -- Test case 1: I-type instruction, no hazard or forwarding
         report "Test 1a: I-type instruction (addi $10, $0, 4)";
@@ -119,7 +119,7 @@ begin
         pc := pc + 4;
         f_instruction <= "00100000000000000000000000000000";
         f_pcplus4 <= std_logic_vector(pc + 4);
-        w_regdata <= std_logic_vector(unsigned(4, 32));
+        w_regdata <= std_logic_vector(to_unsigned(4, 32));
         wait for clock_period;
 
         -- Test case 2: R-type instruction, no hazard or forwarding, testing
@@ -128,34 +128,37 @@ begin
         pc := pc + 4;
         f_instruction <= "00000000001010100001000000100000";
         f_pcplus4 <= std_logic_vector(pc + 4);
-        w_regdata <= std_logic_vector(unsigned(1, 32));
+        w_regdata <= std_logic_vector(to_unsigned(1, 32));
         wait for clock_period;
 
         report "Test 2b: R-type instruction without writeback (sub $3, $10, $1)";
         pc := pc + 4;
-        f_instruction <= "00000000011010100000100000100010";
+        f_instruction <= "00000001010000010001100000100010";
         f_pcplus4 <= std_logic_vector(pc + 4);
-        w_regdata <= std_logic_vector(unsigned(0, 32));
-
-        report "Stall for Test 2 to complete (addi $0, $0, $0)";
-        pc := pc + 4;
-        f_instruction <= "00100000000000000000000000000000";
-        f_pcplus4 <= std_logic_vector(pc + 4);
-        w_regdata <= std_logic_vector(unsigned(0, 32));
+        w_regdata <= std_logic_vector(to_unsigned(0, 32));
         wait for clock_period;
 
         report "Stall for Test 2 to complete (addi $0, $0, $0)";
         pc := pc + 4;
         f_instruction <= "00100000000000000000000000000000";
         f_pcplus4 <= std_logic_vector(pc + 4);
-        w_regdata <= std_logic_vector(unsigned(5, 32));
+        w_regdata <= std_logic_vector(to_unsigned(0, 32));
         wait for clock_period;
 
         report "Stall for Test 2 to complete (addi $0, $0, $0)";
         pc := pc + 4;
         f_instruction <= "00100000000000000000000000000000";
         f_pcplus4 <= std_logic_vector(pc + 4);
-        w_regdata <= std_logic_vector(unsigned(3, 32));
+        w_regdata <= std_logic_vector(to_unsigned(5, 32));
         wait for clock_period;
+
+        report "Stall for Test 2 to complete (addi $0, $0, $0)";
+        pc := pc + 4;
+        f_instruction <= "00100000000000000000000000000000";
+        f_pcplus4 <= std_logic_vector(pc + 4);
+        w_regdata <= std_logic_vector(to_unsigned(3, 32));
+        wait for clock_period;
+
+	wait;
     end process;
 end;

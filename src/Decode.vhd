@@ -74,7 +74,7 @@ begin
         -- R-type instruction components
         variable reg_d_idx : natural range 0 to NUM_REGISTERS - 1; -- Destination register index
         variable shamt : std_logic_vector(4 downto 0); -- Used for shift operations
-        variable funct : std_logic_vector(4 downto 0); -- Specifies the operation to perform
+        variable funct : std_logic_vector(5 downto 0); -- Specifies the operation to perform
         -- I-type instruction components
         variable imm : std_logic_vector(15 downto 0); -- Immediate value
         -- J-type instruction components
@@ -86,7 +86,7 @@ begin
         -- Either starting up or a branch was taken, so the pipeline must be flushed
         if (f_reset = '1') or (now < 1 ps) then
             -- Set register 0 to have a value of 0
-            registers(0) <= 0;
+            registers_var(0) := (others => '0');
             -- Clear the queue
             for i in 0 to 2 loop
 				wb_queue(i) <= 0;
@@ -97,12 +97,12 @@ begin
         elsif (rising_edge(clock)) then
             -- Perform a writeback operation if necessary
             if (wb_queue(wb_queue_idx) /= 0) then
-                registers(wb_queue(wb_queue_idx)) <= w_regdata;
+                registers_var(wb_queue(wb_queue_idx)) := w_regdata;
             end if;
 
             -- Identify the type of the instruction
             opcode := f_instruction(31 downto 26);
-            if (opcode = "00000") then
+            if (opcode = "000000") then
                 -- R-type instruction
                 sig_insttype <= "00";
                 reg_s_idx := to_integer(unsigned(f_instruction(25 downto 21)));
@@ -151,10 +151,10 @@ begin
                     when "001111" =>
                         -- Upper immediate shift
                         sig_imm <= std_logic_vector(shift_left(resize(unsigned(imm), 32), 16));
-                    when "000100" or "000101" =>
+                    when "000100" | "000101" =>
                         -- Address extend
                         sig_imm <= std_logic_vector(shift_left(resize(signed(imm), 32), 2));
-                    when "001100" or "001101" or "001110" =>
+                    when "001100" | "001101" | "001110" =>
                         -- Zero extend
                         sig_imm <= std_logic_vector(resize(unsigned(imm), 32));
                     when others =>
@@ -173,9 +173,9 @@ begin
 
             -- Increment the write back index
             if (wb_queue_idx = 2) then
-                wb_queue_idx = 0;
+                wb_queue_idx <= 0;
             else
-                wb_queue_idx = wb_queue_idx + 1;
+                wb_queue_idx <= wb_queue_idx + 1;
             end if;
         end if;
 
