@@ -135,8 +135,12 @@ begin
                 if (opcode = "000011") then
                     registers_var(LR_IDX) := std_logic_vector(unsigned(f_pcplus4) + 4);
                 end if;
-                -- Extend the address to 32 bits and output it through readdata1
-                sig_readdata1 <= std_logic_vector(resize(unsigned(address), 32));
+                -- Format the output address according to the specification
+                sig_readdata1 <= (
+                    31 downto 28 => f_pcplus4(31 downto 28),
+                    27 downto 2 => address,
+                    others => '0'
+                );
                 -- No write back for J-type instructions
                 wb_queue(wb_queue_idx) <= 0;
             else
@@ -150,7 +154,11 @@ begin
                 case (opcode) is
                     when "001111" =>
                         -- Upper immediate shift
-                        sig_imm <= std_logic_vector(shift_left(resize(unsigned(imm), 32), 16));
+                        -- sig_imm <= std_logic_vector(shift_left(resize(unsigned(imm), 32), 16));
+                        sig_imm <= (
+                            31 downto 16 => imm,
+                            others => '0'
+                        );
                     when "000100" | "000101" =>
                         -- Address extend
                         sig_imm <= std_logic_vector(shift_left(resize(signed(imm), 32), 2));

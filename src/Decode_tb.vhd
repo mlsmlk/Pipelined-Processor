@@ -159,6 +159,27 @@ begin
         w_regdata <= std_logic_vector(to_unsigned(3, 32));
         wait for clock_period;
 
+        -- Test case 3: J-type instructions
+        report "Test 3a: Jump instruction (j 0x123abc)";
+        pc := (31 downto 29 => '1', others => '0');
+        f_instruction <= "00001000000100100011101010111100";
+        f_pcplus4 <= std_logic_vector(pc + 4);
+        w_regdata <= std_logic_vector(to_unsigned(0, 32));
+        wait for clock_period;
+
+        report "Test 3b: Jump and link instruction (jal 0x456def)";
+        pc := pc + 4;
+        f_instruction <= "00001100010001010110110111101111";
+        f_pcplus4 <= std_logic_vector(pc + 4);
+        w_regdata <= std_logic_vector(to_unsigned(0, 32));
+        wait for clock_period;
+
+        report "Stall for the rest of the test";
+        pc := pc + 4;
+        f_instruction <= "00100000000000000000000000000000";
+        f_pcplus4 <= std_logic_vector(pc + 4);
+        w_regdata <= std_logic_vector(to_unsigned(0, 32));
+        wait for clock_period;
 	wait;
     end process;
 end;
