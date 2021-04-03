@@ -138,6 +138,8 @@ begin
                 if (IS_HAZARD(reg_s_idx) or IS_HAZARD(reg_t_idx)) then
                     hazard_exists := '1';
                 else
+                    hazard_exists := '0';
+
                     -- If the instruction is a shift, use shamt instead of Rs for readdata1
                     if (funct = "000000" or funct = "000010" or funct = "000011") then
                         sig_readdata1 <= std_logic_vector(resize(unsigned(shamt), 32));
@@ -183,6 +185,8 @@ begin
                 if (IS_HAZARD(reg_s_idx)) then
                     hazard_exists := '1';
                 else
+                    hazard_exists := '0';
+
                     -- Output the Rs value
                     sig_readdata1 <= registers_var(reg_s_idx);
 
