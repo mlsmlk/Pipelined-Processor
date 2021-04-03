@@ -21,6 +21,10 @@ entity decode is
         w_regdata : in std_logic_vector(31 downto 0);
 
         --- OUTPUTS ---
+        -- To the Fetch stage --
+        -- Signals if the pipeline should be stalled
+        f_stall : out std_logic;
+
         -- To the Execute stage --
         -- Instruction type
         -- "00" = R-type || "01" = I-type || "10" == J-type
@@ -54,12 +58,24 @@ architecture arch of decode is
     signal wb_queue: writeback_queue; -- Stores which register will be written back to next
     signal wb_queue_idx : natural range 0 to 2 := 0;
     -- Output registers
+    signal sig_stall : std_logic;
     signal sig_insttype : std_logic_vector(1 downto 0);
     signal sig_opcode : std_logic_vector(5 downto 0);
     signal sig_readdata1 : std_logic_vector(31 downto 0);
     signal sig_readdata2 : std_logic_vector(31 downto 0);
     signal sig_imm : std_logic_vector(31 downto 0);
 begin
+    function IS_HAZARD (X : integer)
+            return boolean is
+    begin
+        if (wb_queue_idx = 0) then
+            return (wb_queue(0) = X) and (X = wb_queue(1) or X = wb_queue(2));
+        elsif (wb_queue_idx = 1) then
+            return (wb_queue(1) = X) and (X = wb_queue(0) or X = wb_queue(2));
+        else
+            return (wb_queue(2) = X) and (X = wb_queue(0) or X = wb_queue(1));
+        end if;
+    end IS_HAZARD;
 
     decode_proc: process (clock, f_reset)
         ----- VARIABLES -----
@@ -79,6 +95,9 @@ begin
         variable imm : std_logic_vector(15 downto 0); -- Immediate value
         -- J-type instruction components
         variable address : std_logic_vector(25 downto 0); -- Address for jump instruction
+
+        -- Variables used in hazard detection
+        variable hazard_exists : boolean := FALSE;
     begin
         -- Create an alias of the register file to allow the register file to be changed within CC
         registers_var := registers;
@@ -110,33 +129,45 @@ begin
                 reg_d_idx := to_integer(unsigned(f_instruction(15 downto 11)));
                 shamt := f_instruction(10 downto 6);
                 funct := f_instruction(5 downto 0);
+                
                 -- Use funct as the opcode
                 sig_opcode <= funct;
-                -- For all instructions other than jump register, set Rd as writeback
-                if (funct /= "001000") then
-                    wb_queue(wb_queue_idx) <= reg_d_idx;
+                
+                -- Check for any hazards
+                if (IS_HAZARD(reg_s_idx) or IS_HAZARD(reg_t_idx)) then
+                    hazard_exists := TRUE;
                 else
-                    wb_queue(wb_queue_idx) <= 0;
+                    -- If the instruction is a shift, use shamt instead of Rs for readdata1
+                    if (funct = "000000" or funct = "000010" or funct = "000011") then
+                        sig_readdata1 <= std_logic_vector(resize(unsigned(shamt), 32));
+                    else
+                        sig_readdata1 <= registers_var(reg_s_idx);
+                    end if;
+
+                    -- Set Rt to be the other output
+                    sig_readdata2 <= registers_var(reg_t_idx);
+
+                    -- For all instructions other than jump register, set Rd as writeback
+                    if (funct /= "001000") then
+                        wb_queue(wb_queue_idx) <= reg_d_idx;
+                    else
+                        wb_queue(wb_queue_idx) <= 0;
+                    end if;
                 end if;
-                -- If the instruction is a shift, use shamt instead of Rs for readdata1
-                if (funct = "000000" or funct = "000010" or funct = "000011") then
-                    sig_readdata1 <= std_logic_vector(resize(unsigned(shamt), 32));
-                else
-                    sig_readdata1 <= registers_var(reg_s_idx);
-                end if;
-                -- Set Rt to be the other output
-                sig_readdata2 <= registers_var(reg_t_idx);
             elsif (opcode = "000011" or opcode = "000010") then
                 -- J-type instruction
                 sig_insttype <= "10";
                 sig_opcode <= opcode;
                 address := f_instruction(25 downto 0);
+                
                 -- If jump and link, update the link register with PC + 8
                 if (opcode = "000011") then
                     registers_var(LR_IDX) := std_logic_vector(unsigned(f_pcplus4) + 4);
                 end if;
+                
                 -- Format the output address according to the specification
                 sig_readdata1 <= f_pcplus4(31 downto 28) & address & "00";
+                
                 -- No write back for J-type instructions
                 wb_queue(wb_queue_idx) <= 0;
             else
@@ -146,29 +177,53 @@ begin
                 reg_s_idx := to_integer(unsigned(f_instruction(25 downto 21)));
                 reg_t_idx := to_integer(unsigned(f_instruction(20 downto 16)));
                 imm := f_instruction(15 downto 0);
-                -- Extend the immediate value
-                case (opcode) is
-                    when "001111" =>
-                        -- Upper immediate shift
-                        sig_imm <= std_logic_vector(shift_left(resize(unsigned(imm), 32), 16));
-                    when "000100" | "000101" =>
-                        -- Address extend
-                        sig_imm <= std_logic_vector(shift_left(resize(signed(imm), 32), 2));
-                    when "001100" | "001101" | "001110" =>
-                        -- Zero extend
-                        sig_imm <= std_logic_vector(resize(unsigned(imm), 32));
-                    when others =>
-                        -- Sign extend
-                        sig_imm <= std_logic_vector(resize(signed(imm), 32));
-                end case;
-                -- Add writeback register to queue, if there is one
-                if (opcode /= "000100" and opcode /= "000101" and opcode /= "101011") then
-                    wb_queue(wb_queue_idx) <= reg_t_idx;
+
+                -- Check for any hazards
+                if (IS_HAZARD(reg_s_idx)) then
+                    hazard_exists := TRUE;
                 else
-                    wb_queue(wb_queue_idx) <= 0;
+                    -- Output the Rs value
+                    sig_readdata1 <= registers_var(reg_s_idx);
+
+                    -- Extend the immediate value
+                    case (opcode) is
+                        when "001111" =>
+                            -- Upper immediate shift
+                            sig_imm <= std_logic_vector(shift_left(resize(unsigned(imm), 32), 16));
+                        when "000100" | "000101" =>
+                            -- Address extend
+                            sig_imm <= std_logic_vector(shift_left(resize(signed(imm), 32), 2));
+                        when "001100" | "001101" | "001110" =>
+                            -- Zero extend
+                            sig_imm <= std_logic_vector(resize(unsigned(imm), 32));
+                        when others =>
+                            -- Sign extend
+                            sig_imm <= std_logic_vector(resize(signed(imm), 32));
+                    end case;                    
+
+                    -- Add writeback register to queue, if there is one
+                    if (opcode /= "000100" and opcode /= "000101" and opcode /= "101011") then
+                        wb_queue(wb_queue_idx) <= reg_t_idx;
+                    else
+                        wb_queue(wb_queue_idx) <= 0;
+                    end if;
                 end if;
-                -- Output the Rs value
-                sig_readdata1 <= registers_var(reg_s_idx);
+            end if;
+
+            -- Deal with a hazard by stalling the pipeline
+            if (hazard_exists) then
+                -- Stall pipeline with 'addi $0 $0 0' instruction
+                sig_insttype <= "00";
+                sig_opcode <= "001000";
+                sig_readdata1 <= "00000";
+                sig_imm <= (others => '0');
+                wb_queue(wb_queue_idx) <= 0;
+
+                -- Signal to the instruction fetch stage to stop processing instructions
+                sig_hazard <= '1';
+            else
+                -- Safe to continue processing instructions
+                sig_hazard <= '0';
             end if;
 
             -- Increment the write back index
