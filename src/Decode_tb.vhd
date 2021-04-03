@@ -98,69 +98,80 @@ begin
         f_reset <= '0';
 
         -- Test case 1: I-type instruction, no hazard or forwarding
-        report "Test 1a: I-type instruction (addi $10, $0, 4)";
+        report "Test 1a: I-type instruction (addi $10, $0, 4) SHOULD EXECUTE";
         f_instruction <= "00100000000010100000000000000100";
         f_pcplus4 <= std_logic_vector(pc + 4);
         wait for clock_period;
 
-        report "Test 1b: I-type instruction (addi $1, $0, 1)";
+        report "Test 1b: I-type instruction (addi $1, $0, 1) SHOULD EXECUTE";
         pc := pc + 4;
         f_instruction <= "00100000000000010000000000000001";
         f_pcplus4 <= std_logic_vector(pc + 4);
         wait for clock_period;
 
-        report "Stall for Test 1 to complete (addi $0, $0, 0)";
+        -- report "Stall for Test 1 to complete (addi $0, $0, 0)";
+        -- pc := pc + 4;
+        -- f_instruction <= "00100000000000000000000000000000";
+        -- f_pcplus4 <= std_logic_vector(pc + 4);
+        -- wait for clock_period;
+
+        -- report "Write back test 1a (addi $0, $0, 0)";
+        -- pc := pc + 4;
+        -- f_instruction <= "00100000000000000000000000000000";
+        -- f_pcplus4 <= std_logic_vector(pc + 4);
+        -- w_regdata <= std_logic_vector(to_unsigned(4, 32));
+        -- wait for clock_period;
+
+        -- Test case 2: R-type instruction, no hazard or forwarding, testing
+        -- writeback capabilities
+        report "Test 2a: R-type instruction with writeback (add $2, $1, $10) SHOULD STALL";
         pc := pc + 4;
-        f_instruction <= "00100000000000000000000000000000";
+        f_instruction <= "00000000001010100001000000100000";
         f_pcplus4 <= std_logic_vector(pc + 4);
         wait for clock_period;
 
-        report "Write back test 1a (addi $0, $0, 0)";
+        report "Test 2a: R-type instruction with writeback (add $2, $1, $10) SHOULD STALL";
         pc := pc + 4;
-        f_instruction <= "00100000000000000000000000000000";
         f_pcplus4 <= std_logic_vector(pc + 4);
         w_regdata <= std_logic_vector(to_unsigned(4, 32));
         wait for clock_period;
 
-        -- Test case 2: R-type instruction, no hazard or forwarding, testing
-        -- writeback capabilities
-        report "Test 2a: R-type instruction with writeback (add $2, $1, $10)";
+        report "Test 2a: R-type instruction with writeback (add $2, $1, $10) SHOULD EXECUTE";
         pc := pc + 4;
-        f_instruction <= "00000000001010100001000000100000";
         f_pcplus4 <= std_logic_vector(pc + 4);
         w_regdata <= std_logic_vector(to_unsigned(1, 32));
         wait for clock_period;
 
-        report "Test 2b: R-type instruction without writeback (sub $3, $10, $1)";
+        report "Test 2b: R-type instruction without writeback (sub $3, $10, $1) SHOULD EXECUTE";
         pc := pc + 4;
         f_instruction <= "00000001010000010001100000100010";
         f_pcplus4 <= std_logic_vector(pc + 4);
         w_regdata <= std_logic_vector(to_unsigned(0, 32));
         wait for clock_period;
 
-        report "Stall for Test 2 to complete (addi $0, $0, $0)";
-        pc := pc + 4;
-        f_instruction <= "00100000000000000000000000000000";
-        f_pcplus4 <= std_logic_vector(pc + 4);
-        w_regdata <= std_logic_vector(to_unsigned(0, 32));
-        wait for clock_period;
+        -- report "Stall for Test 2 to complete (addi $0, $0, $0)";
+        -- pc := pc + 4;
+        -- f_instruction <= "00100000000000000000000000000000";
+        -- f_pcplus4 <= std_logic_vector(pc + 4);
+        -- w_regdata <= std_logic_vector(to_unsigned(0, 32));
+        -- wait for clock_period;
 
-        report "Stall for Test 2 to complete (addi $0, $0, $0)";
-        pc := pc + 4;
-        f_instruction <= "00100000000000000000000000000000";
-        f_pcplus4 <= std_logic_vector(pc + 4);
-        w_regdata <= std_logic_vector(to_unsigned(5, 32));
-        wait for clock_period;
+        -- report "Stall for Test 2 to complete (addi $0, $0, $0)";
+        -- pc := pc + 4;
+        -- f_instruction <= "00100000000000000000000000000000";
+        -- f_pcplus4 <= std_logic_vector(pc + 4);
+        -- w_regdata <= std_logic_vector(to_unsigned(5, 32));
+        -- wait for clock_period;
 
-        report "Stall for Test 2 to complete (addi $0, $0, $0)";
-        pc := pc + 4;
-        f_instruction <= "00100000000000000000000000000000";
-        f_pcplus4 <= std_logic_vector(pc + 4);
-        w_regdata <= std_logic_vector(to_unsigned(3, 32));
-        wait for clock_period;
+        -- report "Stall for Test 2 to complete (addi $0, $0, $0)";
+        -- pc := pc + 4;
+        -- f_instruction <= "00100000000000000000000000000000";
+        -- f_pcplus4 <= std_logic_vector(pc + 4);
+        -- w_regdata <= std_logic_vector(to_unsigned(3, 32));
+        -- wait for clock_period;
 
         -- Test case 3: J-type instructions
-        report "Test 3a: Jump instruction (j 0x123abc)";
+        report "Test 3a: Jump instruction (j 0x123abc) SHOULD EXECUTE";
         pc := (31 downto 29 => '1', others => '0');
         f_instruction <= "00001000000100100011101010111100";
         f_pcplus4 <= std_logic_vector(pc + 4);
