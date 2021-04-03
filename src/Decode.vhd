@@ -69,6 +69,12 @@ architecture arch of decode is
     impure function IS_HAZARD (reg : integer)
             return boolean is
     begin
+        -- A register-related hazard only occurs if
+        -- (1) The target register is not $0 (nothing is ever written to it)
+        -- AND
+        -- (2) The target register is not being written back to in this clock cycle
+        -- AND
+        -- (3) The target register is present in one of the other positions in the writeback queue
         if (wb_queue_idx = 0) then
             return (reg /= 0) and (reg /= wb_queue(0)) and (reg = wb_queue(1) or reg = wb_queue(2));
         elsif (wb_queue_idx = 1) then

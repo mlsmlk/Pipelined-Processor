@@ -184,7 +184,7 @@ begin
         w_regdata <= std_logic_vector(to_unsigned(0, 32));
         wait for clock_period;
 
-        report "Test 3b: Jump and link instruction (jal 0x456def)";
+        report "Test 3b: Jump and link instruction (jal 0x456def) SHOULD EXECUTE";
         pc := pc + 4;
         f_instruction <= "00001100010001010110110111101111";
         f_pcplus4 <= std_logic_vector(pc + 4);
