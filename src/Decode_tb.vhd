@@ -26,6 +26,10 @@ architecture behavior of decode_tb is
             w_regdata : in std_logic_vector(31 downto 0);
 
             --- OUTPUTS ---
+            -- To the Fetch stage --
+            -- Signals if the pipeline should be stalled
+            f_stall : out std_logic;
+
             -- To the Execute stage --
             -- Instruction type
             -- "00" = R-type || "01" = I-type || "10" == J-type
@@ -53,6 +57,7 @@ architecture behavior of decode_tb is
     signal w_regdata : std_logic_vector(31 downto 0);
 
     --- OUTPUTS ---
+    signal f_stall : std_logic;
     signal e_insttype : std_logic_vector(1 downto 0);
     signal e_opcode : std_logic_vector(5 downto 0);
     signal e_readdata1 : std_logic_vector(31 downto 0);
@@ -71,6 +76,7 @@ begin
         f_pcplus4 => f_pcplus4,
         w_regdata => w_regdata,
         -- Outputs
+        f_stall => f_stall,
         e_insttype => e_insttype,
         e_opcode => e_opcode,
         e_readdata1 => e_readdata1,

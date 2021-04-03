@@ -64,19 +64,20 @@ architecture arch of decode is
     signal sig_readdata1 : std_logic_vector(31 downto 0);
     signal sig_readdata2 : std_logic_vector(31 downto 0);
     signal sig_imm : std_logic_vector(31 downto 0);
-begin
-    function IS_HAZARD (X : integer)
+
+    -- FUNCTIONS --
+    impure function IS_HAZARD(reg : integer)
             return boolean is
     begin
         if (wb_queue_idx = 0) then
-            return (wb_queue(0) = X) and (X = wb_queue(1) or X = wb_queue(2));
+            return (wb_queue(0) = reg) and (reg = wb_queue(1) or reg = wb_queue(2));
         elsif (wb_queue_idx = 1) then
-            return (wb_queue(1) = X) and (X = wb_queue(0) or X = wb_queue(2));
+            return (wb_queue(1) = reg) and (reg = wb_queue(0) or reg = wb_queue(2));
         else
-            return (wb_queue(2) = X) and (X = wb_queue(0) or X = wb_queue(1));
+            return (wb_queue(2) = reg) and (reg = wb_queue(0) or reg = wb_queue(1));
         end if;
-    end IS_HAZARD;
-
+    end function;
+begin
     decode_proc: process (clock, f_reset)
         ----- VARIABLES -----
         -- Replica of the register file to help simplify the write back process
@@ -97,7 +98,7 @@ begin
         variable address : std_logic_vector(25 downto 0); -- Address for jump instruction
 
         -- Variables used in hazard detection
-        variable hazard_exists : boolean := FALSE;
+        variable hazard_exists : std_logic := '0';
     begin
         -- Create an alias of the register file to allow the register file to be changed within CC
         registers_var := registers;
@@ -135,7 +136,7 @@ begin
                 
                 -- Check for any hazards
                 if (IS_HAZARD(reg_s_idx) or IS_HAZARD(reg_t_idx)) then
-                    hazard_exists := TRUE;
+                    hazard_exists := '1';
                 else
                     -- If the instruction is a shift, use shamt instead of Rs for readdata1
                     if (funct = "000000" or funct = "000010" or funct = "000011") then
@@ -180,7 +181,7 @@ begin
 
                 -- Check for any hazards
                 if (IS_HAZARD(reg_s_idx)) then
-                    hazard_exists := TRUE;
+                    hazard_exists := '1';
                 else
                     -- Output the Rs value
                     sig_readdata1 <= registers_var(reg_s_idx);
@@ -211,19 +212,19 @@ begin
             end if;
 
             -- Deal with a hazard by stalling the pipeline
-            if (hazard_exists) then
+            if (hazard_exists = '1') then
                 -- Stall pipeline with 'addi $0 $0 0' instruction
-                sig_insttype <= "00";
+                sig_insttype <= "01";
                 sig_opcode <= "001000";
-                sig_readdata1 <= "00000";
+                sig_readdata1 <= (others => '0');
                 sig_imm <= (others => '0');
                 wb_queue(wb_queue_idx) <= 0;
 
                 -- Signal to the instruction fetch stage to stop processing instructions
-                sig_hazard <= '1';
+                sig_stall <= '1';
             else
                 -- Safe to continue processing instructions
-                sig_hazard <= '0';
+                sig_stall <= '0';
             end if;
 
             -- Increment the write back index
@@ -239,6 +240,7 @@ begin
     end process;
 
     -- Assign registers to outputs
+    f_stall	<= sig_stall;
     e_insttype  <= sig_insttype;
     e_opcode    <= sig_opcode;
     e_readdata1 <= sig_readdata1;
