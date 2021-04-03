@@ -66,15 +66,15 @@ architecture arch of decode is
     signal sig_imm : std_logic_vector(31 downto 0);
 
     -- FUNCTIONS --
-    impure function IS_HAZARD(reg : integer)
+    impure function IS_HAZARD (reg : integer)
             return boolean is
     begin
         if (wb_queue_idx = 0) then
-            return (wb_queue(0) = reg) and (reg = wb_queue(1) or reg = wb_queue(2));
+            return (wb_queue(0) /= reg) and (reg = wb_queue(1) or reg = wb_queue(2));
         elsif (wb_queue_idx = 1) then
-            return (wb_queue(1) = reg) and (reg = wb_queue(0) or reg = wb_queue(2));
+            return (wb_queue(1) /= reg) and (reg = wb_queue(0) or reg = wb_queue(2));
         else
-            return (wb_queue(2) = reg) and (reg = wb_queue(0) or reg = wb_queue(1));
+            return (wb_queue(2) /= reg) and (reg = wb_queue(0) or reg = wb_queue(1));
         end if;
     end function;
 begin
