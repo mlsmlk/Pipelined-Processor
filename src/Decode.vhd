@@ -70,11 +70,11 @@ architecture arch of decode is
             return boolean is
     begin
         if (wb_queue_idx = 0) then
-            return (wb_queue(0) /= reg) and (reg = wb_queue(1) or reg = wb_queue(2));
+            return (reg /= 0) and (reg /= wb_queue(0)) and (reg = wb_queue(1) or reg = wb_queue(2));
         elsif (wb_queue_idx = 1) then
-            return (wb_queue(1) /= reg) and (reg = wb_queue(0) or reg = wb_queue(2));
+            return (reg /= 0) and (reg /= wb_queue(1)) and (reg = wb_queue(0) or reg = wb_queue(2));
         else
-            return (wb_queue(2) /= reg) and (reg = wb_queue(0) or reg = wb_queue(1));
+            return (reg /= 0) and (reg /= wb_queue(2)) and (reg = wb_queue(0) or reg = wb_queue(1));
         end if;
     end function;
 begin
