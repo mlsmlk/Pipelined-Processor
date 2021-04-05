@@ -12,6 +12,7 @@ proc AddWaves {} {
     add wave -position end sim:/data_memory_tb/m_waitrequest
     add wave -position end sim:/data_memory_tb/m_read
     add wave -position end sim:/data_memory_tb/m_write
+    add wave -position end sim:/data_memory_tb/mem_busy
 }
 
 vlib work
