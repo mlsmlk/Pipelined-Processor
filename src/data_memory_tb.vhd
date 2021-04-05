@@ -9,6 +9,7 @@ ARCHITECTURE behaviour OF data_memory_tb IS
 COMPONENT data_memory IS
 	port (
 		clk: in std_logic;
+		reset: in std_logic;
 		
 		-- from execute stage
 		alu_in: in std_logic_vector (31 downto 0);	-- result of alu (address part in diagram)
@@ -48,6 +49,7 @@ COMPONENT memory IS
  END COMPONENT;
 
     	signal clk : std_logic := '0';
+	signal reset : std_logic := '0';
     	constant clk_period : time := 1 ns;
     	signal m_addr : integer range 0 to 8192;
 	signal m_read : std_logic;
@@ -67,6 +69,7 @@ BEGIN
 dut: data_memory
 	port map(
     		clk => clk,
+		reset => reset,
 		alu_in => alu_in,	
 		mem_in => mem_in,
 		readwrite_flag => readwrite_flag,
@@ -109,10 +112,10 @@ begin
 mem_in <= "11111111111111111111111111111111";
 
 -- put your tests here
-REPORT "Test case 1: Write Flag";
+--REPORT "Test case 1: Write Flag";
 readwrite_flag <= "10";
 alu_in <= "00000000000000000000000000000001";
-WAIT FOR 1 * clk_period;
+wait until rising_edge(m_waitrequest);
 ASSERT (mem_flag = '1') REPORT "MEM FLAG ERROR" SEVERITY ERROR;
 ASSERT (alu_res = "00000000000000000000000000000001") REPORT "ALU RES ERROR" SEVERITY ERROR;
 ASSERT (mem_res = "11111111111111111111111111111111") REPORT "MEM RES ERROR" SEVERITY ERROR;
