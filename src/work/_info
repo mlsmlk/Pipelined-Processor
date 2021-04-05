@@ -10,23 +10,23 @@ z2
 cModel Technology
 Z0 dC:/Users/malki/Desktop/Ceng/Winter_2021/ECSE 425/Pipelined-Processor/src
 Edata_memory
-Z1 w1616762717
+Z1 w1617613923
 Z2 DPx4 ieee 11 numeric_std 0 22 aU^R8eGcicLcUFIaBQSL>3
 Z3 DPx3 std 6 textio 0 22 zE1`LPoLg^DX3Oz^4Fj1K3
 Z4 DPx4 ieee 14 std_logic_1164 0 22 cVAk:aDinOX8^VGI1ekP<3
-!i122 60
+!i122 165
 R0
 Z5 8data_memory.vhd
 Z6 Fdata_memory.vhd
 l0
 L5 1
-Vc>M8oHdLGFSZo_3V2LBfa2
-!s100 NA<RGiiG;]Hz;9SF10]K;3
+VMIQA8C7391d>Kdo1[ROG40
+!s100 S@VW>He`cW4^ik1_@MLTd2
 Z7 OV;C;2020.1;71
 32
-Z8 !s110 1617451527
+Z8 !s110 1617614204
 !i10b 1
-Z9 !s108 1617451527.000000
+Z9 !s108 1617614203.000000
 Z10 !s90 -reportprogress|300|data_memory.vhd|
 Z11 !s107 data_memory.vhd|
 !i113 1
@@ -35,12 +35,12 @@ Artl
 R2
 R3
 R4
-DEx4 work 11 data_memory 0 22 c>M8oHdLGFSZo_3V2LBfa2
-!i122 60
-l38
-L34 47
-VQj8LA^@HMDIdN@]cVOn=C1
-!s100 e`Ue@4DB_zo>EWlRF@;lE3
+DEx4 work 11 data_memory 0 22 MIQA8C7391d>Kdo1[ROG40
+!i122 165
+l40
+L34 53
+VkKhXVQUAza8z8[R@]>LSH0
+!s100 3HU27Pg<j8GG3dCb2dlPo0
 R7
 32
 R8
@@ -50,26 +50,67 @@ R10
 R11
 !i113 1
 R12
-Ememory
-Z13 w1616762834
+Edata_memory_tb
+Z13 w1617613957
 R2
 R3
 R4
-!i122 62
+!i122 166
 R0
-Z14 8memory.vhd
-Z15 Fmemory.vhd
+Z14 8data_memory_tb.vhd
+Z15 Fdata_memory_tb.vhd
+l0
+L5 1
+VZPTA:]hk<fE0lBeReM:kB0
+!s100 05FQ;0YGFTiLZz5PX4JKD1
+R7
+32
+R8
+!i10b 1
+Z16 !s108 1617614204.000000
+Z17 !s90 -reportprogress|300|data_memory_tb.vhd|
+Z18 !s107 data_memory_tb.vhd|
+!i113 1
+R12
+Abehaviour
+R2
+R3
+R4
+DEx4 work 14 data_memory_tb 0 22 ZPTA:]hk<fE0lBeReM:kB0
+!i122 166
+l66
+L8 131
+Vcz;C7k0HP_ZPHR[2_ZQB[1
+!s100 hikSGSYV92SiP4b5`_?D@3
+R7
+32
+R8
+!i10b 1
+R16
+R17
+R18
+!i113 1
+R12
+Ememory
+Z19 w1616762834
+R2
+R3
+R4
+!i122 167
+R0
+Z20 8memory.vhd
+Z21 Fmemory.vhd
 l0
 L6 1
 V05ObAM8QnB]7Ij^l5L;zb2
 !s100 @iEg:aQdQc]eATfETV8D_3
 R7
 32
-Z16 !s110 1617451528
+R8
 !i10b 1
-Z17 !s108 1617451528.000000
-Z18 !s90 -reportprogress|300|memory.vhd|
-Z19 !s107 memory.vhd|
+R16
+Z22 !s90 -reportprogress|300|memory.vhd|
+Z23 !s107 memory.vhd|
 !i113 1
 R12
 Artl
@@ -77,81 +118,81 @@ R2
 R3
 R4
 DEx4 work 6 memory 0 22 05ObAM8QnB]7Ij^l5L;zb2
-!i122 62
+!i122 167
 l29
 L23 48
 VM`C;aiiinbS=OUBKD7;XO0
 !s100 c1NMD9fBmCLZI2WQIUH>o1
 R7
 32
-R16
+R8
 !i10b 1
-R17
-R18
-R19
+R16
+R22
+R23
 !i113 1
 R12
 Ememory_tb
-Z20 w1617451039
+Z24 w1617451039
 R2
 R3
 R4
-!i122 63
+!i122 168
 R0
-Z21 8memory_tb.vhd
-Z22 Fmemory_tb.vhd
+Z25 8memory_tb.vhd
+Z26 Fmemory_tb.vhd
 l0
 L5 1
 V:gamI`Z?1_z;8ed=KM?Nm2
 !s100 K:h_7;_e46:2;TAj@4dAB3
 R7
 32
-R16
+R8
 !i10b 1
-R17
-Z23 !s90 -reportprogress|300|memory_tb.vhd|
-!s107 memory_tb.vhd|
+R16
+Z27 !s90 -reportprogress|300|memory_tb.vhd|
+Z28 !s107 memory_tb.vhd|
 !i113 1
 R12
 Abehaviour
 R2
 R3
 R4
-Z24 DEx4 work 9 memory_tb 0 22 :gamI`Z?1_z;8ed=KM?Nm2
-!i122 63
+Z29 DEx4 work 9 memory_tb 0 22 :gamI`Z?1_z;8ed=KM?Nm2
+!i122 168
 l38
-L8 79
-VAlClm=1mc]HF7kZSQQfc43
-!s100 RH7k;MdjMfM^f?@oUc3lS3
+Z30 L8 79
+Z31 VAlClm=1mc]HF7kZSQQfc43
+Z32 !s100 RH7k;MdjMfM^f?@oUc3lS3
 R7
 32
-R16
+R8
 !i10b 1
-R17
-R23
-Z25 !s107 memory_tb.vhd|
+R16
+R27
+R28
 !i113 1
 R12
 Ewb_tb
-Z26 w1616749425
+Z33 w1616749425
 R2
 R3
 R4
-!i122 21
+!i122 82
 R0
-Z27 8write_back_tb.vhd
-Z28 Fwrite_back_tb.vhd
+Z34 8write_back_tb.vhd
+Z35 Fwrite_back_tb.vhd
 l0
 L5 1
 Vb=m5`=TQASeljEincgMNf1
 !s100 @Kg`jPa_[ze?S@@aB95b^0
 R7
 32
-Z29 !s110 1617447418
+Z36 !s110 1617608865
 !i10b 1
-Z30 !s108 1617447418.000000
-Z31 !s90 -reportprogress|300|write_back_tb.vhd|
-Z32 !s107 write_back_tb.vhd|
+Z37 !s108 1617608865.000000
+Z38 !s90 -reportprogress|300|write_back_tb.vhd|
+Z39 !s107 write_back_tb.vhd|
 !i113 1
 R12
 Abehavior
@@ -159,40 +200,40 @@ R2
 R3
 R4
 DEx4 work 5 wb_tb 0 22 b=m5`=TQASeljEincgMNf1
-!i122 21
+!i122 82
 l30
 L8 68
 V^VKg7ZSUZ2U26;OGif_FB0
 !s100 <TT@kiClPhSZI[8S_iLjP1
 R7
 32
-R29
+R36
 !i10b 1
-R30
-R31
-R32
+R37
+R38
+R39
 !i113 1
 R12
 Ewrite_back
-Z33 w1616749053
+Z40 w1616749053
 R2
 R3
 R4
-!i122 20
+!i122 81
 R0
-Z34 8write_back.vhd
-Z35 Fwrite_back.vhd
+Z41 8write_back.vhd
+Z42 Fwrite_back.vhd
 l0
 L5 1
 V^jlW=EPk563n[kLQoKZbE3
 !s100 GT`XJKGR8VWllL91W]iFQ1
 R7
 32
-Z36 !s110 1617447417
+R36
 !i10b 1
-Z37 !s108 1617447417.000000
-Z38 !s90 -reportprogress|300|write_back.vhd|
-Z39 !s107 write_back.vhd|
+R37
+Z43 !s90 -reportprogress|300|write_back.vhd|
+Z44 !s107 write_back.vhd|
 !i113 1
 R12
 Aarch
@@ -200,7 +241,7 @@ R2
 R3
 R4
 DEx4 work 10 write_back 0 22 ^jlW=EPk563n[kLQoKZbE3
-!i122 20
+!i122 81
 l17
 L16 17
 Vl3oKg?SJnPI>T3^hY8CAh2
@@ -210,7 +251,7 @@ R7
 R36
 !i10b 1
 R37
-R38
-R39
+R43
+R44
 !i113 1
 R12

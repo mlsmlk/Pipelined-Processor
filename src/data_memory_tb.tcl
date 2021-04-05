@@ -1,18 +1,17 @@
 proc AddWaves {} {
 	;#Add waves we're interested in to the Wave window
-    add wave -position end sim:/data_memory/clk
-    add wave -position end sim:/data_memory/alu_in
-    add wave -position end sim:/data_memory/mem_in
-    add wave -position end sim:/data_memory/mem_res
-    add wave -position end sim:/data_memory/alu_res
-    add wave -position end sim:/data_memory/readwrite_flag
-    add wave -position end sim:/data_memory/mem_flag
-    add wave -position end sim:/data_memory/writedata
-    add wave -position end sim:/data_memory/address
-    add wave -position end sim:/data_memory/memwrite
-    add wave -position end sim:/data_memory/memread
-    add wave -position end sim:/data_memory/readdata
-
+    add wave -position end sim:/data_memory_tb/clk
+    add wave -position end sim:/data_memory_tb/alu_in
+    add wave -position end sim:/data_memory_tb/mem_in
+    add wave -position end sim:/data_memory_tb/mem_res
+    add wave -position end sim:/data_memory_tb/alu_res
+    add wave -position end sim:/data_memory_tb/readwrite_flag
+    add wave -position end sim:/data_memory_tb/mem_flag
+    add wave -position end sim:/data_memory_tb/m_readdata
+    add wave -position end sim:/data_memory_tb/m_writedata
+    add wave -position end sim:/data_memory_tb/m_waitrequest
+    add wave -position end sim:/data_memory_tb/m_read
+    add wave -position end sim:/data_memory_tb/m_write
 }
 
 vlib work
@@ -24,7 +23,7 @@ vcom memory.vhd
 vcom memory_tb.vhd
 
 ;# Start simulation
-vsim data_memory
+vsim data_memory_tb
 
 ;# Generate a clock with 1ns period
 force -deposit clk 0 0 ns, 1 0.5 ns -repeat 1 ns
@@ -33,4 +32,4 @@ force -deposit clk 0 0 ns, 1 0.5 ns -repeat 1 ns
 AddWaves
 
 ;# Run for 250 ns
-run 250ns
+run 3ns
