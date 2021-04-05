@@ -4,7 +4,6 @@ proc AddWaves {} {
     add wave -position end sim:/data_memory_tb/alu_in
     add wave -position end sim:/data_memory_tb/mem_in
     add wave -position end sim:/data_memory_tb/mem_res
-    add wave -position end sim:/data_memory_tb/alu_res
     add wave -position end sim:/data_memory_tb/readwrite_flag
     add wave -position end sim:/data_memory_tb/mem_flag
     add wave -position end sim:/data_memory_tb/m_readdata

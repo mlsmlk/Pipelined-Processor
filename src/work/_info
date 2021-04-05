@@ -10,23 +10,23 @@ z2
 cModel Technology
 Z0 dC:/Users/malki/Desktop/Ceng/Winter_2021/ECSE 425/Pipelined-Processor/src
 Edata_memory
-Z1 w1617624293
+Z1 w1617626652
 Z2 DPx4 ieee 11 numeric_std 0 22 aU^R8eGcicLcUFIaBQSL>3
 Z3 DPx3 std 6 textio 0 22 zE1`LPoLg^DX3Oz^4Fj1K3
 Z4 DPx4 ieee 14 std_logic_1164 0 22 cVAk:aDinOX8^VGI1ekP<3
-!i122 409
+!i122 451
 R0
 Z5 8data_memory.vhd
 Z6 Fdata_memory.vhd
 l0
 L5 1
-VkK0UM4k3H6FGhPh37^lMl1
-!s100 RB49_`z8P[eT=lWP;0>Se3
+V16JWlUQ6NF;;O5KENJz:C1
+!s100 5L]A81GI^=i2Ym>koTcQe1
 Z7 OV;C;2020.1;71
 32
-Z8 !s110 1617625325
+Z8 !s110 1617627459
 !i10b 1
-Z9 !s108 1617625325.000000
+Z9 !s108 1617627459.000000
 Z10 !s90 -reportprogress|300|data_memory.vhd|
 Z11 !s107 data_memory.vhd|
 !i113 1
@@ -35,12 +35,12 @@ Artl
 R2
 R3
 R4
-DEx4 work 11 data_memory 0 22 kK0UM4k3H6FGhPh37^lMl1
-!i122 409
-l44
-L38 64
-VUW;YIg5>k1Ia`MfIQTkzc3
-!s100 =Z6YhKG]R34WB1EK1Macb3
+DEx4 work 11 data_memory 0 22 16JWlUQ6NF;;O5KENJz:C1
+!i122 451
+l43
+L37 61
+VDLLCbPD:e1PhGa8DVRW[^1
+!s100 DfU9943SAhz?IN[`WhSXZ3
 R7
 32
 R8
@@ -51,11 +51,11 @@ R11
 !i113 1
 R12
 Edata_memory_tb
-Z13 w1617625310
+Z13 w1617627440
 R2
 R3
 R4
-!i122 410
+!i122 452
 R0
 Z14 8data_memory_tb.vhd
 Z15 Fdata_memory_tb.vhd
@@ -65,11 +65,11 @@ VZPTA:]hk<fE0lBeReM:kB0
 !s100 05FQ;0YGFTiLZz5PX4JKD1
 R7
 32
-R8
+Z16 !s110 1617627460
 !i10b 1
 R9
-Z16 !s90 -reportprogress|300|data_memory_tb.vhd|
-Z17 !s107 data_memory_tb.vhd|
+Z17 !s90 -reportprogress|300|data_memory_tb.vhd|
+Z18 !s107 data_memory_tb.vhd|
 !i113 1
 R12
 Abehaviour
@@ -77,40 +77,40 @@ R2
 R3
 R4
 DEx4 work 14 data_memory_tb 0 22 ZPTA:]hk<fE0lBeReM:kB0
-!i122 410
-l72
-L8 140
-VFb^I395ek^z6W@iWU]Xjn3
-!s100 FF6hzSA6mVG>ULaROZUJ00
+!i122 452
+l71
+L8 146
+V`BfVUli7BJ7gi9E?<XgO70
+!s100 V;Aa1<ze7PU`Ilk`Rg=md3
 R7
 32
-R8
+R16
 !i10b 1
 R9
-R16
 R17
+R18
 !i113 1
 R12
 Ememory
-Z18 w1616762834
+Z19 w1616762834
 R2
 R3
 R4
-!i122 411
+!i122 453
 R0
-Z19 8memory.vhd
-Z20 Fmemory.vhd
+Z20 8memory.vhd
+Z21 Fmemory.vhd
 l0
 L6 1
 V05ObAM8QnB]7Ij^l5L;zb2
 !s100 @iEg:aQdQc]eATfETV8D_3
 R7
 32
-Z21 !s110 1617625326
+R16
 !i10b 1
-R9
-Z22 !s90 -reportprogress|300|memory.vhd|
-Z23 !s107 memory.vhd|
+Z22 !s108 1617627460.000000
+Z23 !s90 -reportprogress|300|memory.vhd|
+Z24 !s107 memory.vhd|
 !i113 1
 R12
 Artl
@@ -118,38 +118,38 @@ R2
 R3
 R4
 DEx4 work 6 memory 0 22 05ObAM8QnB]7Ij^l5L;zb2
-!i122 411
+!i122 453
 l29
 L23 48
 VM`C;aiiinbS=OUBKD7;XO0
 !s100 c1NMD9fBmCLZI2WQIUH>o1
 R7
 32
-R21
+R16
 !i10b 1
-R9
 R22
 R23
+R24
 !i113 1
 R12
 Ememory_tb
-Z24 w1617451039
+Z25 w1617451039
 R2
 R3
 R4
-!i122 412
+!i122 454
 R0
-Z25 8memory_tb.vhd
-Z26 Fmemory_tb.vhd
+Z26 8memory_tb.vhd
+Z27 Fmemory_tb.vhd
 l0
 L5 1
 V:gamI`Z?1_z;8ed=KM?Nm2
 !s100 K:h_7;_e46:2;TAj@4dAB3
 R7
 32
-R21
+R16
 !i10b 1
-Z27 !s108 1617625326.000000
+R22
 Z28 !s90 -reportprogress|300|memory_tb.vhd|
 Z29 !s107 memory_tb.vhd|
 !i113 1
@@ -159,16 +159,16 @@ R2
 R3
 R4
 Z30 DEx4 work 9 memory_tb 0 22 :gamI`Z?1_z;8ed=KM?Nm2
-!i122 412
+!i122 454
 l38
 Z31 L8 79
 Z32 VAlClm=1mc]HF7kZSQQfc43
 Z33 !s100 RH7k;MdjMfM^f?@oUc3lS3
 R7
 32
-R21
+R16
 !i10b 1
-R27
+R22
 R28
 R29
 !i113 1

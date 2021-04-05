@@ -22,7 +22,6 @@ entity data_memory is
 
 		--to write back stage
 		mem_res	: out std_logic_vector (31 downto 0);	-- read data from mem stage
-		alu_res	: out std_logic_vector (31 downto 0);	-- alu result from ex stage
 		mem_flag: out std_logic;			-- mux flag (1- read mem, 0-read alu result)
 	
 		--memory signals
@@ -44,8 +43,6 @@ signal state: states;
 begin
 mem_process: process (reset,clk, alu_in, mem_in, readwrite_flag, m_waitrequest, state)
 begin
-
-alu_res <= alu_in;
 if(reset = '1' ) then 
 	state <= idle;
 
@@ -61,10 +58,9 @@ elsif(rising_edge(clk)) then
 			state <= mm_write;		-- switch to cache write state
 		else					--If the request is else
 			mem_flag <='0';			-- there nothing related to memory
-			mem_res <= "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
 			state <= idle;			-- stay in idle state
-		end if;	
-
+			end if;	
+		
 	when mm_read =>
 		if m_waitrequest = '1' then		--If the main memory is ready for request
 			m_addr <= to_integer(unsigned(alu_in)); -- get address from ALU
@@ -85,7 +81,7 @@ elsif(rising_edge(clk)) then
 		end if;
 
 	when mm_write =>
-		if m_waitrequest = '1' then			--If the word count reaches to the limit (4 word per block			address := to_integer(unsigned(alu_in));
+		if m_waitrequest = '1' then			--If the word count reaches to the limit (4 word per block					
 			m_addr <= to_integer(unsigned(alu_in));
 			m_write <= '1';
 			m_read  <= '0';
