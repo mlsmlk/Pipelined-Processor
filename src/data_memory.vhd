@@ -16,9 +16,6 @@ entity data_memory is
 		alu_in: in std_logic_vector (31 downto 0);	-- result of alu (address part in diagram)
 		mem_in: in std_logic_vector (31 downto 0);	-- read data 2 from execute stage (write data part in diagram)
 		readwrite_flag: in std_logic_vector (1 downto 0); --flag to determine if the op code is related to memory ("01" = read, "10" = write, "00" = neither)
-		
-		--to execute stage
-		mem_busy: out std_logic;
 
 		--to write back stage
 		mem_res	: out std_logic_vector (31 downto 0);	-- read data from mem stage
@@ -52,7 +49,6 @@ if(reset = '1' ) then
 elsif(rising_edge(clk)) then
 	case state is
 	when idle =>
-		mem_busy <= '1';
 		if readwrite_flag = "01" then		-- If the request is read
 			mem_flag <='1';			-- deinfe memory related flag to 1
 			m_write <= 'X';
@@ -65,7 +61,6 @@ elsif(rising_edge(clk)) then
 			mem_flag <='0';			-- there nothing related to memory
 			m_write <= 'X';
 			m_read <= 'X';
-			
 			state <= idle;			-- stay in idle state
 			end if;	
 		
@@ -82,7 +77,6 @@ elsif(rising_edge(clk)) then
 	when mm_wait =>
 		if m_waitrequest = '0' then
 			mem_res <= m_readdata;
-			mem_busy <= '0';
 			state <= idle;
 		else 
 			state <= mm_wait;

@@ -16,9 +16,6 @@ COMPONENT data_memory IS
 		mem_in: in std_logic_vector (31 downto 0);	-- read data 2 from execute stage (write data part in diagram)
 		readwrite_flag: in std_logic_vector (1 downto 0); --flag to determine if the op code is related to memory ("01" = read, "10" = write, "00" = neither)
 
-		-- to execute stage
-		mem_busy:out std_logic;
-
 		--to write back stage
 		mem_res	: out std_logic_vector (31 downto 0);	-- read data from mem stage
 		mem_flag: out std_logic;			-- mux flag (1- read mem, 0-read alu result)
@@ -53,7 +50,6 @@ COMPONENT memory IS
 
     	signal clk : std_logic := '0';
 	signal reset : std_logic := '0';
-	signal mem_busy : std_logic := '0';
     	constant clk_period : time := 1 ns;
     	signal m_addr : integer range 0 to 8192;
 	signal m_read : std_logic;
@@ -74,7 +70,6 @@ dut: data_memory
 	port map(
     		clk => clk,
 		reset => reset,
-		mem_busy => mem_busy,
 		alu_in => alu_in,	
 		mem_in => mem_in,
 		readwrite_flag => readwrite_flag,

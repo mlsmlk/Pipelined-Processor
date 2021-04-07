@@ -55,7 +55,7 @@ elsif(rising_edge(clk)) then
 		mem_busy <= '1';
 		if readwrite_flag = "01" then		-- If the request is read
 			mem_flag <='1';			-- deinfe memory related flag to 1
-m_write <= 'X';
+			m_write <= 'X';
 			m_read <= 'X';
 			state <= mm_read;		-- switch to cache read state
 		elsif readwrite_flag = "10" then	-- If the request is write
