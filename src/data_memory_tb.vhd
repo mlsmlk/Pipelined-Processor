@@ -15,6 +15,7 @@ architecture behaviour of data_memory_tb is
 			alu_in : in std_logic_vector (31 downto 0); -- result of alu (address part in diagram)
 			mem_in : in std_logic_vector (31 downto 0); -- read data 2 from execute stage (write data part in diagram)
 			readwrite_flag : in std_logic_vector (1 downto 0); --flag to determine if the op code is related to memory ("01" = read, "10" = write, "00" = neither)
+write_file_flag : in std_logic := '0'; --flag to indicate the commands are finished and the memory can be written into file
 
 			--to write back stage
 			mem_res : out std_logic_vector (31 downto 0); -- read data from mem stage
@@ -34,7 +35,7 @@ architecture behaviour of data_memory_tb is
 	signal mem_flag : std_logic; 
 	signal mem_res : std_logic_vector (31 downto 0); 
 	signal alu_res : std_logic_vector (31 downto 0);
-
+	signal write_file_flag :  std_logic;
 begin
 	dut : data_memory
 	port map(
@@ -42,7 +43,8 @@ begin
 		reset => reset, 
 		alu_in => alu_in, 
 		mem_in => mem_in, 
-		readwrite_flag => readwrite_flag, 
+		readwrite_flag => readwrite_flag,
+write_file_flag => write_file_flag, 
 		mem_res => mem_res, 
 		alu_res => alu_res, 
 		mem_flag => mem_flag
@@ -100,7 +102,7 @@ begin
 		assert (mem_res = "11111111111111111111111111111000") report "MEM RES ERROR" severity ERROR;
 		assert (alu_res = "00000000000000000000000000001111") report "ALU RES ERROR" severity ERROR;
 		
-
+		write_file_flag <= '1';
 		report "--------------END-----------------";
 		wait;
 	end process;
