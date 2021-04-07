@@ -22,8 +22,8 @@ entity data_memory is
 
 		--to write back stage
 		mem_res	: out std_logic_vector (31 downto 0);	-- read data from mem stage
-		alu_res	: out std_logic_vector (31 downto 0);	-- alu result from ex stage
 		mem_flag: out std_logic;			-- mux flag (1- read mem, 0-read alu result)
+		alu_res	: out std_logic_vector (31 downto 0);
 	
 		--memory signals
 		m_addr : out integer range 0 to ram_size-1;	
@@ -44,8 +44,8 @@ signal state: states;
 begin
 mem_process: process (reset,clk, alu_in, mem_in, readwrite_flag, m_waitrequest, state)
 begin
-
 alu_res <= alu_in;
+
 if(reset = '1' ) then 
 	state <= idle;
 
@@ -55,12 +55,17 @@ elsif(rising_edge(clk)) then
 		mem_busy <= '1';
 		if readwrite_flag = "01" then		-- If the request is read
 			mem_flag <='1';			-- deinfe memory related flag to 1
+m_write <= 'X';
+			m_read <= 'X';
 			state <= mm_read;		-- switch to cache read state
 		elsif readwrite_flag = "10" then	-- If the request is write
 			mem_flag <='1';			-- deinfe memory related flag to 1
 			state <= mm_write;		-- switch to cache write state
 		else					--If the request is else
 			mem_flag <='0';			-- there nothing related to memory
+			m_write <= 'X';
+			m_read <= 'X';
+			
 			state <= idle;			-- stay in idle state
 			end if;	
 		

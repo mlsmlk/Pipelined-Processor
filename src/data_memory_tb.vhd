@@ -22,6 +22,7 @@ COMPONENT data_memory IS
 		--to write back stage
 		mem_res	: out std_logic_vector (31 downto 0);	-- read data from mem stage
 		mem_flag: out std_logic;			-- mux flag (1- read mem, 0-read alu result)
+		alu_res	: out std_logic_vector (31 downto 0);	
 	
 		--memory signals
 		m_addr : out integer range 0 to 8192-1;
@@ -78,6 +79,7 @@ dut: data_memory
 		mem_in => mem_in,
 		readwrite_flag => readwrite_flag,
 		mem_res	=> mem_res,
+		alu_res => alu_res,
 		mem_flag => mem_flag,	
 
 		m_addr => m_addr,
@@ -115,39 +117,47 @@ begin
 
 
 -- put your tests here
-REPORT "Test case 1: Write Flag";
+REPORT "Test case 1: Write Flag - variable 1";
 readwrite_flag <= "10";
 mem_in <= "11111111111111111111111111111111";
 alu_in <= "00000000000000000000000000000001";
-wait until rising_edge(mem_busy);
+wait until rising_edge(m_waitrequest);
 ASSERT (mem_flag = '1') REPORT "MEM FLAG ERROR" SEVERITY ERROR;
 ASSERT (mem_res = "11111111111111111111111111111111") REPORT "MEM RES ERROR" SEVERITY ERROR;
-wait for clk_period;
+ASSERT (alu_res = "00000000000000000000000000000001") REPORT "ALU RES ERROR" SEVERITY ERROR;
 
-REPORT "Test case 2: Write Flag";
+REPORT "Test case 2: Write Flag - variable 2";
 readwrite_flag <= "10";
 mem_in <= "11111111111111111111111111111000";
 alu_in <= "00000000000000000000000000001111";
-wait until rising_edge(mem_busy);
+wait until rising_edge(m_waitrequest);
 ASSERT (mem_flag = '1') REPORT "MEM FLAG ERROR" SEVERITY ERROR;
 ASSERT (mem_res = "11111111111111111111111111111000") REPORT "MEM RES ERROR" SEVERITY ERROR;
-wait for clk_period;
+ASSERT (alu_res = "00000000000000000000000000001111") REPORT "ALU RES ERROR" SEVERITY ERROR;
 
-REPORT "Test case 2: Read Flag";
-readwrite_flag <= "01";
-alu_in <= "00000000000000000000000000000001";
-wait until rising_edge(mem_busy);
-ASSERT (mem_flag = '1') REPORT "MEM FLAG ERROR" SEVERITY ERROR;
-ASSERT (mem_res = "11111111111111111111111111111111") REPORT "MEM RES ERROR" SEVERITY ERROR;
-wait for clk_period;
-
-REPORT "Test case 3: Non mem related";
+REPORT "Test case 3: Non mem related ";
 readwrite_flag <= "00";
 alu_in <= "00000000000000000000000000001111";
-wait until rising_edge(mem_busy);
+wait until rising_edge(m_waitrequest);
 ASSERT (mem_flag = '0') REPORT "MEM FLAG ERROR" SEVERITY ERROR;
-wait for clk_period;
 
+REPORT "Test case 4: Read Flag - variable 1";
+readwrite_flag <= "01";
+alu_in <= "00000000000000000000000000000001";
+wait until rising_edge(m_waitrequest);
+ASSERT (mem_flag = '1') REPORT "MEM FLAG ERROR" SEVERITY ERROR;
+ASSERT (mem_res = "11111111111111111111111111111111") REPORT "MEM RES ERROR" SEVERITY ERROR;
+ASSERT (alu_res = "00000000000000000000000000000001") REPORT "ALU RES ERROR" SEVERITY ERROR;
 
+REPORT "Test case 5: Read Flag - variable 2";
+readwrite_flag <= "01";
+alu_in <= "00000000000000000000000000001111";
+wait until rising_edge(m_waitrequest);
+ASSERT (mem_flag = '1') REPORT "MEM FLAG ERROR" SEVERITY ERROR;
+ASSERT (mem_res = "11111111111111111111111111111000") REPORT "MEM RES ERROR" SEVERITY ERROR;
+ASSERT (alu_res = "00000000000000000000000000001111") REPORT "ALU RES ERROR" SEVERITY ERROR;
+
+REPORT "--------------END-----------------";
+wait;
  end process;
 end;
