@@ -9,13 +9,12 @@ architecture behaviour of data_memory_tb is
 	component data_memory is
 		port (
 			clock : in std_logic;
-			reset : in std_logic;
- 
+			
 			-- from execute stage
 			alu_in : in std_logic_vector (31 downto 0); -- result of alu (address part in diagram)
 			mem_in : in std_logic_vector (31 downto 0); -- read data 2 from execute stage (write data part in diagram)
 			readwrite_flag : in std_logic_vector (1 downto 0); --flag to determine if the op code is related to memory ("01" = read, "10" = write, "00" = neither)
-write_file_flag : in std_logic := '0'; --flag to indicate the commands are finished and the memory can be written into file
+			write_file_flag : in std_logic := '0'; --flag to indicate the commands are finished and the memory can be written into file
 
 			--to write back stage
 			mem_res : out std_logic_vector (31 downto 0); -- read data from mem stage
@@ -26,7 +25,6 @@ write_file_flag : in std_logic := '0'; --flag to indicate the commands are finis
 
 
 	signal clock : std_logic := '0';
-	signal reset : std_logic := '0';
 	constant clk_period : time := 1 ns;
 
 	signal alu_in : std_logic_vector (31 downto 0); 
@@ -40,11 +38,10 @@ begin
 	dut : data_memory
 	port map(
 		clock => clock, 
-		reset => reset, 
 		alu_in => alu_in, 
 		mem_in => mem_in, 
 		readwrite_flag => readwrite_flag,
-write_file_flag => write_file_flag, 
+		write_file_flag => write_file_flag, 
 		mem_res => mem_res, 
 		alu_res => alu_res, 
 		mem_flag => mem_flag

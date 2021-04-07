@@ -6,13 +6,10 @@ use ieee.std_logic_textio.all;
 
 entity data_memory is
 	generic (
-		ram_size : integer := 8192;
-		mem_delay : time := 1 ns;
-		clock_period : time := 1 ns
+		ram_size : integer := 8192	
 	);
 	port (
 		clock : in std_logic;
-		reset : in std_logic;
 
 		-- from execute stage
 		alu_in : in std_logic_vector (31 downto 0); -- result of alu (address part in diagram)
@@ -41,17 +38,13 @@ architecture rtl of data_memory is
 	signal m_writedata : std_logic_vector (31 downto 0);
 	signal m_waitrequest : std_logic;
 	signal initialization_flag : std_logic := '0';
-	signal file_flag : std_logic := '0';
- 
+	 
 begin
 	mem_process : process (clock)
 		file memoryFile : text open write_mode is "memory.txt";
 		variable outLine : line; 
-		variable rowLine : integer := 0;
-
 	begin
 		m_addr <= to_integer(unsigned(alu_in));
-		file_flag <= write_file_flag;
 		--This is a cheap trick to initialize the SRAM in simulation
 		if (now < 1 ps) then
 			for i in 0 to ram_size - 1 loop
@@ -93,13 +86,11 @@ begin
 			alu_res <= alu_in;
 		end if;
 		if (write_file_flag = '1') then
-			while (rowLine < 8192) loop
-			write(outLine, rowLine);
+			for index in 0 to ram_size-1 loop
+			write(outLine, index);
 			writeline(memoryFile, outLine);
-			write(outLine, ram_block(rowLine));
-			writeline(memoryFile, outLine);
-			rowLine := rowLine + 1;
- 
+			write(outLine, ram_block(index));
+			writeline(memoryFile, outLine); 
 		end loop;
 	end if;
 	end process;
