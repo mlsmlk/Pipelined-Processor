@@ -5,11 +5,11 @@ use ieee.numeric_std.all;
 entity data_memory is
 	generic (
 		ram_size : integer := 8192;
-		mem_delay : time := 10 ns;
+		mem_delay : time := 1 ns;
 		clock_period : time := 1 ns
 	);
 	port (
-		clk : in std_logic;
+		clock : in std_logic;
 		reset : in std_logic;
 
 		-- from execute stage
@@ -20,80 +20,70 @@ entity data_memory is
 		--to write back stage
 		mem_res : out std_logic_vector (31 downto 0); -- read data from mem stage
 		mem_flag : out std_logic; -- mux flag (1- read mem, 0-read alu result)
-		alu_res : out std_logic_vector (31 downto 0); -- result of alu
- 
-		--memory signals
-		m_addr : out integer range 0 to ram_size - 1; 
-		m_read : out std_logic; 
-		m_readdata : in std_logic_vector (31 downto 0);
-		m_write : out std_logic;
-		m_writedata : out std_logic_vector (31 downto 0);
-		m_waitrequest : in std_logic
-	);
-end data_memory;
+		alu_res : out std_logic_vector (31 downto 0) -- result of alu
+);
+end entity;
 
 architecture rtl of data_memory is
 
-	--Define states
-	type states is (idle, mm_write, mm_read, mm_wait);
-	signal state : states;
+	type MEM is array(ram_size - 1 downto 0) of STD_LOGIC_VECTOR(31 downto 0);
+	signal ram_block : MEM;
+	signal read_address_reg : integer range 0 to ram_size - 1;
+	signal write_waitreq_reg : STD_LOGIC := '1';
+	signal read_waitreq_reg : STD_LOGIC := '1';
+	signal m_addr : integer range 0 to ram_size-1;
+	signal m_read : std_logic;
+	signal m_readdata : std_logic_vector (31 downto 0);
+	signal m_write : std_logic;
+	signal m_writedata : std_logic_vector (31 downto 0);
+	signal m_waitrequest : std_logic;
+	signal initialization_flag : std_logic :='0';
+
 
 begin
-	mem_process : process (reset, clk, alu_in, mem_in, readwrite_flag, m_waitrequest, state)
+	mem_process : process (clock)
 	begin
-		alu_res <= alu_in;
+	m_addr <= to_integer(unsigned(alu_in));
+		
+		--This is a cheap trick to initialize the SRAM in simulation
+		if (now < 1 ps) then
+			for i in 0 to ram_size - 1 loop
+				ram_block(i) <= std_logic_vector(to_unsigned(i, 32));
+			end loop;
+		initialization_flag <= '1';
+		end if;			
 
-		if (reset = '1') then
-			state <= idle;
+		--This is the actual synthesizable SRAM block
+		if (clock'EVENT and clock = '1') then
+			if readwrite_flag = "01" then -- If the request is read
+			mem_flag <= '1'; -- deinfe memory related flag to 1
+			m_write <= '0';
+			m_read <= '1';
+			
+		elsif readwrite_flag = "10" then -- If the request is write
+			mem_flag <= '1'; -- deinfe memory related flag to 1
+			m_write <= '1';
+			m_read <= '0';
+			m_writedata <= mem_in;
 
-		elsif (rising_edge(clk)) then
-			case state is
-				when idle => 
-					if readwrite_flag = "01" then -- If the request is read
-						mem_flag <= '1'; -- deinfe memory related flag to 1
-						m_write <= 'X';
-						m_read <= 'X';
-						state <= mm_read; -- switch to cache read state
-					elsif readwrite_flag = "10" then -- If the request is write
-						mem_flag <= '1'; -- deinfe memory related flag to 1
-						state <= mm_write; -- switch to cache write state
-					else --If the request is else
-						mem_flag <= '0'; -- there nothing related to memory
-						m_write <= 'X';
-						m_read <= 'X';
-						state <= idle; -- stay in idle state
-					end if; 
- 
-				when mm_read => 
-					if m_waitrequest = '1' then --If the main memory is ready for request
-						m_addr <= to_integer(unsigned(alu_in)); -- get address from ALU
-						m_write <= '0'; 
-						m_read <= '1';
-						state <= mm_wait; 
-					else
-						state <= mm_read; --wait main memory to be ready
-					end if;
- 
-				when mm_wait => 
-					if m_waitrequest = '0' then
-						mem_res <= m_readdata;
-						state <= idle;
-					else
-						state <= mm_wait;
-					end if;
+		else --If the request is else
+			mem_flag <= '0'; -- there nothing related to memory
+			m_write <= 'X';
+			m_read <= 'X';
+			mem_res <= "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+		end if; 
 
-				when mm_write => 
-					if m_waitrequest = '1' then --If the word count reaches to the limit (4 word per block 
-						m_addr <= to_integer(unsigned(alu_in));
-						m_write <= '1';
-						m_read <= '0';
-						m_writedata <= mem_in;
-						state <= mm_read;
-					else --wait until main memory is ready for receving request
-						m_write <= '0'; 
-						state <= mm_write;
-					end if;
-			end case;
+			if (m_write = '1') then
+				ram_block(m_addr) <= m_writedata;
+initialization_flag <= '0';
+			end if;
+			read_address_reg <= m_addr;
+			if(initialization_flag = '0') then
+			mem_res <= ram_block(read_address_reg);
+			end if;
+			alu_res <= alu_in;
 		end if;
-	end process;
+end process;
+	
+	
 end rtl;
