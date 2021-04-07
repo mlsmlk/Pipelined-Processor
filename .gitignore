@@ -1,3 +1,4 @@
 Assembler/Driver.class
 Assembler/program.txt
 Assembler/*.asm
+src/*.bak
