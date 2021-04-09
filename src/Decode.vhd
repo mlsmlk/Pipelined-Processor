@@ -37,8 +37,14 @@ entity decode is
         e_readdata2 : out std_logic_vector(31 downto 0);
         -- Extended immediate value
         e_imm : out std_logic_vector(31 downto 0);
-        -- Signal to execute or memory stage to forward a value
-        e_forward : out std_logic
+        -- Signal to Execute to use the forwarded value from Execute
+        e_forward_ex : out std_logic;
+        -- Indicate which operand the forwarded value from Execute maps to
+        e_forwardop_ex : out std_logic;
+        -- Signal to Execute to use the forwarded value from Memory
+        e_forward_mem : out std_logic;
+        -- Indicate which operand the forwarded value from Memory maps to
+        e_forwardop_mem : out std_logic;
     );
 end decode;
 
@@ -66,7 +72,10 @@ architecture arch of decode is
     signal sig_readdata1 : std_logic_vector(31 downto 0);
     signal sig_readdata2 : std_logic_vector(31 downto 0);
     signal sig_imm : std_logic_vector(31 downto 0);
-
+    signal sig_forward_ex : std_logic;
+    signal sig_forwardop_ex : std_logic;
+    signal sig_forward_mem : std_logic;
+    signal sig_forwardop_mem : std_logic;
     -- FUNCTIONS --
     impure function IS_HAZARD (reg : integer)
             return boolean is
@@ -135,11 +144,8 @@ begin
         variable imm : std_logic_vector(15 downto 0); -- Immediate value
         -- J-type instruction components
         variable address : std_logic_vector(25 downto 0); -- Address for jump instruction
-
         -- Variables used in hazard detection
         variable hazard_exists : std_logic := '0';
-        variable is_reg_s_hazard : boolean;
-        variable is_reg_t_hazard : boolean;
     begin
         -- Create an alias of the register file to allow the register file to be changed within CC
         registers_var := registers;
