@@ -83,6 +83,37 @@ architecture arch of decode is
             return (reg /= 0) and (reg /= wb_queue(2)) and (reg = wb_queue(0) or reg = wb_queue(1));
         end if;
     end function;
+
+    impure function CAN_FORWARD_EX(reg : integer)
+                return boolean is
+        variable prev_wb_idx : natural range 0 to 2 := 0;
+    begin
+        -- Get the writeback index for the instruction in Execute
+        if (wb_queue_idx = 0) then
+            prev_wb_idx := 2;
+        else
+            prev_wb_idx := wb_queue_idx - 1;
+        end if;
+        -- If the instruction in Execute is going to write back to the target register, we can
+        -- forward the value instead
+        return wb_queue(prev_wb_idx) = wb_queue(reg);
+    end function;
+
+    impure function CAN_FORWARD_MEM(reg : integer)
+                return boolean is
+        variable next_wb_idx : natural range 0 to 2 := 0;
+    begin
+        -- Get the writeback index for the instruction in Memory
+        if (wb_queue_idx = 2) then
+            next_wb_idx := 0;
+        else
+            next_wb_idx := wb_queue_idx + 1;
+        end if;
+        -- If the instruction in Memory is going to write back to the target register, we can
+        -- forward the value instead
+        return wb_queue(next_wb_idx) = wb_queue(reg);
+    end function;
+
 begin
     decode_proc: process (clock, f_reset)
         ----- VARIABLES -----
@@ -105,6 +136,8 @@ begin
 
         -- Variables used in hazard detection
         variable hazard_exists : std_logic := '0';
+        variable is_reg_s_hazard : boolean;
+        variable is_reg_t_hazard : boolean;
     begin
         -- Create an alias of the register file to allow the register file to be changed within CC
         registers_var := registers;
@@ -139,13 +172,36 @@ begin
                 
                 -- Use funct as the opcode
                 sig_opcode <= funct;
-                
-                -- Check for any hazards
-                if (IS_HAZARD(reg_s_idx) or IS_HAZARD(reg_t_idx)) then
-                    hazard_exists := '1';
-                else
-                    hazard_exists := '0';
 
+                -- Check for any hazards
+                hazard_exists := '0';
+
+                if (IS_HAZARD(reg_s_idx)) then
+                    -- Check to see if we can forward the value instead of stalling
+                    if (CAN_FORWARD_EX(reg_s_idx)) then
+                        -- Forward the execute output to the execute input
+                    elsif (CAN_FORWARD_MEM(reg_s_idx)) then
+                        -- Forward the memory output to the execute input
+                    else
+                        -- Must stall
+                        hazard_exists := '1';
+                    end if;
+                end if;
+                if (IS_HAZARD(reg_t_idx)) then
+                    -- Check to see if we can forward the value instead of stalling
+                    if (CAN_FORWARD_EX(reg_t_idx)) then
+                        -- Forward the execute output to the execute input
+                    elsif (CAN_FORWARD_MEM(reg_t_idx)) then
+                        -- Forward the memory output to the execute input
+                    else
+                        -- Must stall
+                        hazard_exists := '1';
+                    end if;
+                end if;
+
+                -- If no hazards present, prepare the next instruction, even if one or both of
+                -- the values is going to be forwarded
+                if (hazard_exists := '0') then
                     -- If the instruction is a shift, use shamt instead of Rs for readdata1
                     if (funct = "000000" or funct = "000010" or funct = "000011") then
                         sig_readdata1 <= std_logic_vector(resize(unsigned(shamt), 32));
