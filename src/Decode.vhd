@@ -49,6 +49,7 @@ architecture arch of decode is
 
     ----- TYPE DEFINITIONS -----
     type writeback_queue is array(0 to 2) of natural range 0 to NUM_REGISTERS - 1;
+    type instruction_is_load_queue is array(0 to 2) of std_logic;
     type register_file is array(0 to NUM_REGISTERS - 1) of std_logic_vector(31 downto 0);
 
     ----- SIGNALS -----
@@ -56,6 +57,7 @@ architecture arch of decode is
     signal registers: register_file;
     -- For writing back
     signal wb_queue: writeback_queue; -- Stores which register will be written back to next
+    signal is_load_queue: opcode_queue; -- Stores the associated instruction with each register
     signal wb_queue_idx : natural range 0 to 2 := 0;
     -- Output registers
     signal sig_stall : std_logic;
@@ -95,8 +97,8 @@ architecture arch of decode is
             prev_wb_idx := wb_queue_idx - 1;
         end if;
         -- If the instruction in Execute is going to write back to the target register, we can
-        -- forward the value instead
-        return wb_queue(prev_wb_idx) = wb_queue(reg);
+        -- forward the value instead. The instruction cannot be a load instruction
+        return (wb_queue(prev_wb_idx) = reg) and (is_load_queue(prev_wb_idx) = '0');
     end function;
 
     impure function CAN_FORWARD_MEM(reg : integer)
@@ -149,6 +151,7 @@ begin
             -- Clear the queue
             for i in 0 to 2 loop
 				wb_queue(i) <= 0;
+                is_load_queue(i) <= '0';
 			end loop;
             wb_queue_idx <= 0;
 
@@ -218,6 +221,9 @@ begin
                     else
                         wb_queue(wb_queue_idx) <= 0;
                     end if;
+
+                    -- Store the funct for forwarding purposes
+                    is_load_queue(wb_queue_idx) <= '0';
                 end if;
             elsif (opcode = "000011" or opcode = "000010") then
                 -- J-type instruction
@@ -235,6 +241,9 @@ begin
                 
                 -- No write back for J-type instructions
                 wb_queue(wb_queue_idx) <= 0;
+
+                -- Store the opcode for forwarding purposes
+                is_load_queue(wb_queue_idx) <= '0';
             else
                 -- I-type instruction
                 sig_insttype <= "01";
@@ -274,6 +283,13 @@ begin
                     else
                         wb_queue(wb_queue_idx) <= 0;
                     end if;
+
+                    -- If instruction is a load, take note for forwarding purposes
+                    if (opcode = "100011") then
+                        is_load_queue(wb_queue_idx) <= '1';
+                    else
+                        is_load_queue(wb_queue_idx) <= '0';
+                    end if;
                 end if;
             end if;
 
@@ -285,6 +301,7 @@ begin
                 sig_readdata1 <= (others => '0');
                 sig_imm <= (others => '0');
                 wb_queue(wb_queue_idx) <= 0;
+                is_load_queue(wb_queue_idx) <= '0';
 
                 -- Signal to the instruction fetch stage to stop processing instructions
                 sig_stall <= '1';
