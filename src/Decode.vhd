@@ -189,21 +189,25 @@ begin
 
                 -- Check for any hazards
                 hazard_exists := '0';
+                forward_ex := '0';
+                op_ex := "00";
+                forward_mem := '0';
+                op_mem := "00";
 
                 if (IS_HAZARD(reg_s_idx)) then
                     -- Check to see if we can forward the value instead of stalling
                     if (CAN_FORWARD_EX(reg_s_idx)) then
                         -- Forward the execute output to the execute input
-                        reg_forward_ex <= '1';
+                        forward_ex := '1';
                         op_ex := "10";
                     elsif (CAN_FORWARD_MEM(reg_s_idx)) then
                         -- Forward the memory output to the execute input
-                        reg_forward_mem <= '1';
+                        forward_mem := '1';
                         op_mem := "10";
                     else
                         -- Must stall
-                        reg_forward_ex <= '0';
-                        reg_forward_mem <= '0';
+                        forward_ex := '0';
+                        forward_mem := '0';
                         hazard_exists := '1';
                     end if;
                 end if;
@@ -211,47 +215,50 @@ begin
                     -- Check to see if we can forward the value instead of stalling
                     if (CAN_FORWARD_EX(reg_t_idx)) then
                         -- Forward the execute output to the execute input
-                        reg_forward_ex <= '1';
+                        forward_ex := '1';
                         op_ex := op_ex or "01";
                     elsif (CAN_FORWARD_MEM(reg_t_idx)) then
                         -- Forward the memory output to the execute input
-                        reg_forward_mem <= '1';
+                        forward_mem := '1';
                         op_mem := op_mem or "01";
                     else
                         -- Must stall
+                        forward_ex := '0';
+                        forward_mem := '0';
                         hazard_exists := '1';
                     end if;
                 end if;
 
+                reg_forward_ex <= forward_ex;
                 reg_forwardop_ex <= op_ex;
+                reg_forward_mem <= forward_mem;
                 reg_forwardop_mem <= op_mem;
 
                 -- If no hazards present, prepare the next instruction, even if one or both of
                 -- the values is going to be forwarded
                 if (hazard_exists = '0') then
-                    case (op_ex or op_mem) is
-                        when "10" =>
-                            -- Get value for Rt
-                            sig_readdata2 <= registers_var(reg_t_idx);
-                        when "01" =>
-                            -- Get value for Rs
-                            -- If the instruction is a shift, use shamt instead of Rs for readdata1
-                            if (funct = "000000" or funct = "000010" or funct = "000011") then
-                                sig_readdata1 <= std_logic_vector(resize(unsigned(shamt), 32));
-                            else
-                                sig_readdata1 <= registers_var(reg_s_idx);
-                            end if;
-                        when "00" =>
-                            -- No forwarding. Get both values
-                            -- If the instruction is a shift, use shamt instead of Rs for readdata1
-                            if (funct = "000000" or funct = "000010" or funct = "000011") then
-                                sig_readdata1 <= std_logic_vector(resize(unsigned(shamt), 32));
-                            else
-                                sig_readdata1 <= registers_var(reg_s_idx);
-                            end if;
-                            -- Set Rt to be the other output
-                            sig_readdata2 <= registers_var(reg_t_idx);
-                    end case;
+                    -- Don't need to worry about forwarding here because the forwarding flag will
+                    -- force Execute to ignore any value coming out of readdata
+                    
+                    -- If the instruction is a shift, use shamt instead of Rs for readdata1
+                    if (funct = "000000" or funct = "000010" or funct = "000011") then
+                        sig_readdata1 <= std_logic_vector(resize(unsigned(shamt), 32));
+                    else
+                        sig_readdata1 <= registers_var(reg_s_idx);
+                    end if;
+
+                    -- Set Rt to be the other output
+                    sig_readdata2 <= registers_var(reg_t_idx);
+
+                    -- For all instructions other than jump register, set Rd as writeback
+                    if (funct /= "001000") then
+                        wb_queue(wb_queue_idx) <= reg_d_idx;
+                    else
+                        wb_queue(wb_queue_idx) <= 0;
+                    end if;
+
+                    -- Store the funct for forwarding purposes
+                    is_load_queue(wb_queue_idx) <= '0';
                 end if;
             elsif (opcode = "000011" or opcode = "000010") then
                 -- J-type instruction
@@ -281,10 +288,38 @@ begin
                 imm := f_instruction(15 downto 0);
 
                 -- Check for any hazards
+                hazard_exists := '0';
+                forward_ex := '0';
+                op_ex := "00";
+                forward_mem := '0';
+                op_mem := "00";
+
                 if (IS_HAZARD(reg_s_idx)) then
-                    hazard_exists := '1';
-                else
-                    hazard_exists := '0';
+                    -- Check to see if we can forward the value instead of stalling
+                    if (CAN_FORWARD_EX(reg_s_idx)) then
+                        -- Forward the execute output to the execute input
+                        forward_ex := '1';
+                        op_ex := "10";
+                    elsif (CAN_FORWARD_MEM(reg_s_idx)) then
+                        -- Forward the memory output to the execute input
+                        forward_mem := '1';
+                        op_mem := "10";
+                    else
+                        -- Must stall
+                        forward_ex := '0';
+                        forward_mem := '0';
+                        hazard_exists := '1';
+                    end if;
+                end if;
+
+                reg_forward_ex <= forward_ex;
+                reg_forwardop_ex <= op_ex;
+                reg_forward_mem <= forward_mem;
+                reg_forwardop_mem <= op_mem;
+
+                if (hazard_exists = '0') then
+                    -- Don't need to worry about forwarding here because the forwarding flag will
+                    -- force Execute to ignore any value coming out of readdata
 
                     -- Output the Rs value
                     sig_readdata1 <= registers_var(reg_s_idx);
