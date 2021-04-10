@@ -126,8 +126,8 @@ begin
         --
         assert (e_insttype = "01") report "Expected I-type instruction" severity error;
         assert (e_opcode = "001000") report "Opcode was not 001000" severity error;
-        assert (e_readdata1 = std_logic_vector(unsigned(0, 32))) report "Readdata1 was not 0" severity error;
-        assert (e_imm = "0000000000000100") report "Immediate was not 4" severity error;
+        assert (e_readdata1 = std_logic_vector(to_unsigned(0, 32))) report "Readdata1 was not 0" severity error;
+        assert (e_imm = std_logic_vector(to_unsigned(4, 32))) report "Immediate was not 4" severity error;
         assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
         assert (e_forward_mem = '0') report "Memory forwarding was enabled when it should not have disabled" severity error;
         assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
@@ -141,8 +141,8 @@ begin
         --
         assert (e_insttype = "01") report "Expected I-type instruction" severity error;
         assert (e_opcode = "001000") report "Opcode was not 001000" severity error;
-        assert (e_readdata1 = std_logic_vector(unsigned(0, 32))) report "Readdata1 was not 0" severity error;
-        assert (e_imm = "0000000000000001") report "Immediate was not 1" severity error;
+        assert (e_readdata1 = std_logic_vector(to_unsigned(0, 32))) report "Readdata1 was not 0" severity error;
+        assert (e_imm = std_logic_vector(to_unsigned(1, 32))) report "Immediate was not 1" severity error;
         assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
         assert (e_forward_mem = '0') report "Memory forwarding was enabled when it should not have disabled" severity error;
         assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
@@ -189,6 +189,7 @@ begin
         --
         assert (e_insttype = "10") report "Expected J-type instruction" severity error;
         assert (e_opcode = "000010") report "Opcode was not 000010" severity error;
+        assert (e_readdata1 = "11100000010010001110101011110000") report "Readdata1 was not 11100000010010001110101011110000" severity error;
         assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
         assert (e_forward_mem = '0') report "Memory forwarding was enabled when it should not have disabled" severity error;
         assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
@@ -203,6 +204,7 @@ begin
         --
         assert (e_insttype = "10") report "Expected J-type instruction" severity error;
         assert (e_opcode = "000011") report "Opcode was not 000011" severity error;
+        assert (e_readdata1 = "11100001000101011011011110111100") report "Readdata1 was not 11100000010010001110101011110000" severity error;
         assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
         assert (e_forward_mem = '0') report "Memory forwarding was enabled when it should not have disabled" severity error;
         assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
@@ -213,9 +215,9 @@ begin
         f_reset <= '0';
 
         -- Test case 4: Load instruction
-        report "Test 4a: Load instruction (lw $4 0x7891)";
+        report "Test 4a: Load instruction (lw $4 0x8791)";
         pc := pc + 4;
-        f_instruction <= "100011" & "00000" & "00100" & "0111100010010001";
+        f_instruction <= "100011" & "00000" & "00100" & "1000011110010001";
         f_pcplus4 <= std_logic_vector(pc + 4);
         w_regdata <= std_logic_vector(to_unsigned(0, 32));
         --
@@ -223,8 +225,8 @@ begin
         --
         assert (e_insttype = "01") report "Expected I-type instruction" severity error;
         assert (e_opcode = "100011") report "Opcode was not 100011" severity error;
-        assert (e_readdata1 = std_logic_vector(unsigned(0, 32))) report "Readdata1 was not 0" severity error;
-        assert (e_imm = "0111100010010001") report "Immediate was not 0111100010010001" severity error;
+        assert (e_readdata1 = std_logic_vector(to_unsigned(0, 32))) report "Readdata1 was not 0" severity error;
+        assert (e_imm = "11111111111111111000011110010001") report "Immediate was not 1000011110010001" severity error;
         assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
         assert (e_forward_mem = '0') report "Memory forwarding was enabled when it should not have disabled" severity error;
         assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
@@ -239,8 +241,8 @@ begin
         --
         assert (e_insttype = "00") report "Expected R-type instruction" severity error;
         assert (e_opcode = "100000") report "Opcode was not 100000" severity error;
-        assert (e_readdata1 = std_logic_vector(unsigned(0, 32))) report "Readdata1 was not 0" severity error;
-        assert (e_imm = "0000000000000000") report "Immediate was not 0" severity error;
+        assert (e_readdata1 = std_logic_vector(to_unsigned(0, 32))) report "Readdata1 was not 0" severity error;
+        assert (e_imm = std_logic_vector(to_unsigned(0, 32))) report "Immediate was not 0" severity error;
         assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
         assert (e_forward_mem = '0') report "Memory forwarding was enabled when it should not have disabled" severity error;
         assert (f_stall = '1') report "Stall signal was low when there should have been a stall" severity error;
@@ -255,14 +257,14 @@ begin
         --
         assert (e_insttype = "00") report "Expected R-type instruction" severity error;
         assert (e_opcode = "100000") report "Opcode was not 100000" severity error;
-        assert (e_readdata2 = std_logic_vector(unsigned(1, 32))) report "Readdata2 was not 1" severity error;
+        assert (e_readdata2 = std_logic_vector(to_unsigned(1, 32))) report "Readdata2 was not 1" severity error;
         assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
         assert (e_forward_mem = '1') report "Memory forwarding was disabled when it should not have enabled" severity error;
         assert (e_forwardop_mem = "10") report "Memory forwarding operand should be 10" severity error;
         assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
 
         -- Test case 5: Shamt instruction
-        report "Test 5: Logical right shift (srl $6 $10 1)";**************************
+        report "Test 5: Logical right shift (srl $6 $10 1)";
         pc := pc + 4;
         f_instruction <= "000000" & "00000" & "01010" & "00110" & "00001" & "000010";
         f_pcplus4 <= std_logic_vector(pc + 4);
@@ -272,8 +274,8 @@ begin
         --
         assert (e_insttype = "00") report "Expected R-type instruction" severity error;
         assert (e_opcode = "000010") report "Opcode was not 000010" severity error;
-        assert (e_readdata1 = std_logic_vector(unsigned(1, 32))) report "Readdata1 was not 1" severity error;
-        assert (e_readdata2 = std_logic_vector(unsigned(4, 32))) report "Readdata2 was not 4" severity error;
+        assert (e_readdata1 = std_logic_vector(to_unsigned(1, 32))) report "Readdata1 was not 1" severity error;
+        assert (e_readdata2 = std_logic_vector(to_unsigned(4, 32))) report "Readdata2 was not 4" severity error;
         assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
         assert (e_forward_mem = '0') report "Memory forwarding was enabled when it should not have disabled" severity error;
         assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
