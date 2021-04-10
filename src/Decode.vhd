@@ -40,11 +40,13 @@ entity decode is
         -- Signal to Execute to use the forwarded value from Execute
         e_forward_ex : out std_logic;
         -- Indicate which operand the forwarded value from Execute maps to
-        e_forwardop_ex : out std_logic;
+        -- "10" = readdata1 || "01" = readdata2 || "11" = both
+        e_forwardop_ex : out std_logic_vector(1 downto 0);
         -- Signal to Execute to use the forwarded value from Memory
         e_forward_mem : out std_logic;
         -- Indicate which operand the forwarded value from Memory maps to
-        e_forwardop_mem : out std_logic;
+        -- "10" = readdata1 || "01" = readdata2 || "11" = both
+        e_forwardop_mem : out std_logic_vector(1 downto 0)
     );
 end decode;
 
@@ -146,6 +148,9 @@ begin
         variable address : std_logic_vector(25 downto 0); -- Address for jump instruction
         -- Variables used in hazard detection
         variable hazard_exists : std_logic := '0';
+        -- Variable used in forwarding
+        variable op_ex : std_logic_vector(1 downto 0); -- Temporary variable for the execute operator
+        variable op_mem : std_logic_vector(1 downto 0); -- Temporary variable for the memory operator
     begin
         -- Create an alias of the register file to allow the register file to be changed within CC
         registers_var := registers;
@@ -189,10 +194,16 @@ begin
                     -- Check to see if we can forward the value instead of stalling
                     if (CAN_FORWARD_EX(reg_s_idx)) then
                         -- Forward the execute output to the execute input
+                        reg_forward_ex <= '1';
+                        op_ex := "10";
                     elsif (CAN_FORWARD_MEM(reg_s_idx)) then
                         -- Forward the memory output to the execute input
+                        reg_forward_mem <= '1';
+                        op_mem := "10";
                     else
                         -- Must stall
+                        reg_forward_ex <= '0';
+                        reg_forward_mem <= '0';
                         hazard_exists := '1';
                     end if;
                 end if;
@@ -200,36 +211,47 @@ begin
                     -- Check to see if we can forward the value instead of stalling
                     if (CAN_FORWARD_EX(reg_t_idx)) then
                         -- Forward the execute output to the execute input
+                        reg_forward_ex <= '1';
+                        op_ex := op_ex or "01";
                     elsif (CAN_FORWARD_MEM(reg_t_idx)) then
                         -- Forward the memory output to the execute input
+                        reg_forward_mem <= '1';
+                        op_mem := op_mem or "01";
                     else
                         -- Must stall
                         hazard_exists := '1';
                     end if;
                 end if;
 
+                reg_forwardop_ex <= op_ex;
+                reg_forwardop_mem <= op_mem;
+
                 -- If no hazards present, prepare the next instruction, even if one or both of
                 -- the values is going to be forwarded
-                if (hazard_exists := '0') then
-                    -- If the instruction is a shift, use shamt instead of Rs for readdata1
-                    if (funct = "000000" or funct = "000010" or funct = "000011") then
-                        sig_readdata1 <= std_logic_vector(resize(unsigned(shamt), 32));
-                    else
-                        sig_readdata1 <= registers_var(reg_s_idx);
-                    end if;
-
-                    -- Set Rt to be the other output
-                    sig_readdata2 <= registers_var(reg_t_idx);
-
-                    -- For all instructions other than jump register, set Rd as writeback
-                    if (funct /= "001000") then
-                        wb_queue(wb_queue_idx) <= reg_d_idx;
-                    else
-                        wb_queue(wb_queue_idx) <= 0;
-                    end if;
-
-                    -- Store the funct for forwarding purposes
-                    is_load_queue(wb_queue_idx) <= '0';
+                if (hazard_exists = '0') then
+                    case (op_ex or op_mem) is
+                        when "10" =>
+                            -- Get value for Rt
+                            sig_readdata2 <= registers_var(reg_t_idx);
+                        when "01" =>
+                            -- Get value for Rs
+                            -- If the instruction is a shift, use shamt instead of Rs for readdata1
+                            if (funct = "000000" or funct = "000010" or funct = "000011") then
+                                sig_readdata1 <= std_logic_vector(resize(unsigned(shamt), 32));
+                            else
+                                sig_readdata1 <= registers_var(reg_s_idx);
+                            end if;
+                        when "00" =>
+                            -- No forwarding. Get both values
+                            -- If the instruction is a shift, use shamt instead of Rs for readdata1
+                            if (funct = "000000" or funct = "000010" or funct = "000011") then
+                                sig_readdata1 <= std_logic_vector(resize(unsigned(shamt), 32));
+                            else
+                                sig_readdata1 <= registers_var(reg_s_idx);
+                            end if;
+                            -- Set Rt to be the other output
+                            sig_readdata2 <= registers_var(reg_t_idx);
+                    end case;
                 end if;
             elsif (opcode = "000011" or opcode = "000010") then
                 -- J-type instruction
@@ -330,9 +352,13 @@ begin
 
     -- Assign registers to outputs
     f_stall	<= sig_stall;
-    e_insttype  <= sig_insttype;
-    e_opcode    <= sig_opcode;
-    e_readdata1 <= sig_readdata1;
-    e_readdata2 <= sig_readdata2;
-    e_imm       <= sig_imm;
+    e_insttype      <= sig_insttype;
+    e_opcode        <= sig_opcode;
+    e_readdata1     <= sig_readdata1;
+    e_readdata2     <= sig_readdata2;
+    e_imm           <= sig_imm;
+    e_forward_ex    <= sig_forward_ex;
+    e_forwardop_ex  <= sig_forwardop_ex;
+    e_forward_mem   <= sig_forward_mem;
+    e_forwardop_mem <= sig_forwardop_mem;
 end arch;
