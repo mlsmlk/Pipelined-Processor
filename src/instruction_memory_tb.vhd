@@ -7,7 +7,7 @@ end instruction_memory_tb;
 
 architecture behavior of instruction_memory_tb is
 
-component memory is 
+component instruction_memory is 
 GENERIC(
     ram_size : INTEGER := 32768;
     mem_delay : time := 10 ns;
