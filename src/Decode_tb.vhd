@@ -158,14 +158,14 @@ begin
         assert (e_insttype = "00") report "Expected R-type instruction" severity error;
         assert (e_opcode = "100000") report "Opcode was not 100000" severity error;
         assert (e_forward_ex = '1') report "Execute forwarding was disabled when it should not have enabled" severity error;
-        assert (e_forwardop_ex = "01") report "Execute forwarding operand should be 01" severity error;
+        assert (e_forwardop_ex = "10") report "Execute forwarding operand should be 10" severity error;
         assert (e_forward_mem = '1') report "Memory forwarding was disabled when it should not have enabled" severity error;
-        assert (e_forwardop_mem = "10") report "Memory forwarding operand should be 10" severity error;
+        assert (e_forwardop_mem = "01") report "Memory forwarding operand should be 01" severity error;
         assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
 
-        report "Test 2b: R-type instruction without writeback (add $3, $10, $10) SHOULD FORWARD";
+        report "Test 2b: R-type instruction without writeback (add $3, $1, $1) SHOULD FORWARD";
         pc := pc + 4;
-        f_instruction <= "000000" & "01010" & "01010" & "00011" & "00000" & "100000";
+        f_instruction <= "000000" & "00001" & "00001" & "00011" & "00000" & "100000";
         f_pcplus4 <= std_logic_vector(pc + 4);
         w_regdata <= std_logic_vector(to_unsigned(4, 32));
         --
@@ -239,8 +239,8 @@ begin
         --
         wait for clock_period;
         --
-        assert (e_insttype = "00") report "Expected R-type instruction" severity error;
-        assert (e_opcode = "100000") report "Opcode was not 100000" severity error;
+        assert (e_insttype = "01") report "Expected I-type instruction" severity error;
+        assert (e_opcode = "001000") report "Opcode was not 001000" severity error;
         assert (e_readdata1 = std_logic_vector(to_unsigned(0, 32))) report "Readdata1 was not 0" severity error;
         assert (e_imm = std_logic_vector(to_unsigned(0, 32))) report "Immediate was not 0" severity error;
         assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
