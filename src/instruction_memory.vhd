@@ -13,17 +13,17 @@ ENTITY instruction_memory IS
 	);
 	PORT (
 		clock: IN STD_LOGIC;
-		writedata: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
+		writedata: IN STD_LOGIC_VECTOR (31 downto 0);
 		address: IN INTEGER RANGE 0 TO ram_size-1;
 		memwrite: IN STD_LOGIC;
 		memread: IN STD_LOGIC;
-		readdata: OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
+		readdata: OUT STD_LOGIC_VECTOR (31 downto 0);
 		waitrequest: OUT STD_LOGIC
 	);
 END instruction_memory;
 
 ARCHITECTURE rtl OF instruction_memory IS
-	TYPE MEM IS ARRAY(ram_size-1 downto 0) OF STD_LOGIC_VECTOR(7 DOWNTO 0);
+	TYPE MEM IS ARRAY(ram_size-1 downto 0) OF STD_LOGIC_VECTOR(7 downto 0);
 	SIGNAL ram_block: MEM;
 	SIGNAL read_address_reg: INTEGER RANGE 0 to ram_size-1;
 	SIGNAL write_waitreq_reg: STD_LOGIC := '1';
@@ -47,7 +47,7 @@ BEGIN
                 read(instruction_line, line_data);
                 
                 -- Memory is byte addressable, but 4 bytes always together
-			    ram_block(line_counter) <= line_data(7 downto 0);
+                ram_block(line_counter) <= line_data(7 downto 0);
                 ram_block(line_counter + 1) <= line_data(15 downto 8);
                 ram_block(line_counter + 2) <= line_data(23 downto 16);
                 ram_block(line_counter + 3) <= line_data(31 downto 24);
@@ -59,7 +59,10 @@ BEGIN
 		--This is the actual synthesizable SRAM block
 		IF (clock'event AND clock = '1') THEN
 			IF (memwrite = '1') THEN
-				ram_block(address) <= writedata;
+				ram_block(address) <= writedata(7 downto 0);
+				ram_block(address + 1) <= writedata(15 downto 8);
+				ram_block(address + 2) <= writedata(23 downto 16);
+				ram_block(address + 3) <= writedata(31 downto 24);
 			END IF;
 		read_address_reg <= address;
 		END IF;
@@ -68,7 +71,7 @@ BEGIN
     readdata(7 downto 0) <= ram_block(read_address_reg);
     readdata(15 downto 8) <= ram_block(read_address_reg + 1);
     readdata(23 downto 16) <= ram_block(read_address_reg + 2);
-    readdata(31 downto 24) <= ram_block(read_address_reg + 1);
+    readdata(31 downto 24) <= ram_block(read_address_reg + 3);
 
 
 	--The waitrequest signal is used to vary response time in simulation
