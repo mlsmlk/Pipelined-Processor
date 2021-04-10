@@ -65,7 +65,7 @@ architecture arch of decode is
     signal registers: register_file;
     -- For writing back
     signal wb_queue: writeback_queue; -- Stores which register will be written back to next
-    signal is_load_queue: opcode_queue; -- Stores the associated instruction with each register
+    signal is_load_queue: instruction_is_load_queue; -- Stores the associated instruction with each register
     signal wb_queue_idx : natural range 0 to 2 := 0;
     -- Output registers
     signal sig_stall : std_logic;
@@ -75,9 +75,9 @@ architecture arch of decode is
     signal sig_readdata2 : std_logic_vector(31 downto 0);
     signal sig_imm : std_logic_vector(31 downto 0);
     signal sig_forward_ex : std_logic;
-    signal sig_forwardop_ex : std_logic;
+    signal sig_forwardop_ex : std_logic_vector(1 downto 0);
     signal sig_forward_mem : std_logic;
-    signal sig_forwardop_mem : std_logic;
+    signal sig_forwardop_mem : std_logic_vector(1 downto 0);
     -- FUNCTIONS --
     impure function IS_HAZARD (reg : integer)
             return boolean is
@@ -149,7 +149,9 @@ begin
         -- Variables used in hazard detection
         variable hazard_exists : std_logic := '0';
         -- Variable used in forwarding
+        variable forward_ex : std_logic;
         variable op_ex : std_logic_vector(1 downto 0); -- Temporary variable for the execute operator
+        variable forward_mem : std_logic;
         variable op_mem : std_logic_vector(1 downto 0); -- Temporary variable for the memory operator
     begin
         -- Create an alias of the register file to allow the register file to be changed within CC
@@ -229,10 +231,10 @@ begin
                     end if;
                 end if;
 
-                reg_forward_ex <= forward_ex;
-                reg_forwardop_ex <= op_ex;
-                reg_forward_mem <= forward_mem;
-                reg_forwardop_mem <= op_mem;
+                sig_forward_ex <= forward_ex;
+                sig_forwardop_ex <= op_ex;
+                sig_forward_mem <= forward_mem;
+                sig_forwardop_mem <= op_mem;
 
                 -- If no hazards present, prepare the next instruction, even if one or both of
                 -- the values is going to be forwarded
@@ -312,10 +314,10 @@ begin
                     end if;
                 end if;
 
-                reg_forward_ex <= forward_ex;
-                reg_forwardop_ex <= op_ex;
-                reg_forward_mem <= forward_mem;
-                reg_forwardop_mem <= op_mem;
+                sig_forward_ex <= forward_ex;
+                sig_forwardop_ex <= op_ex;
+                sig_forward_mem <= forward_mem;
+                sig_forwardop_mem <= op_mem;
 
                 if (hazard_exists = '0') then
                     -- Don't need to worry about forwarding here because the forwarding flag will
