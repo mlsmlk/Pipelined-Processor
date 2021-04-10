@@ -55,16 +55,15 @@ architecture behavior of decode_tb is
         );
     end component;
     
-    -- Test signals
-    -- INPUTS
+    ---- TEST SIGNALS ----
+    -- Inputs
     signal clock : std_logic := '0';
     constant clock_period : time := 1 ns;
     signal f_instruction : std_logic_vector(31 downto 0);
     signal f_reset : std_logic;
     signal f_pcplus4 : std_logic_vector(31 downto 0);
     signal w_regdata : std_logic_vector(31 downto 0);
-
-    --- OUTPUTS ---
+    -- Outputs
     signal f_stall : std_logic;
     signal e_insttype : std_logic_vector(1 downto 0);
     signal e_opcode : std_logic_vector(5 downto 0);
@@ -122,73 +121,62 @@ begin
         report "Test 1a: I-type instruction (addi $10, $0, 4) SHOULD EXECUTE";
         f_instruction <= "001000" & "00000" & "01010" & "0000000000000100";
         f_pcplus4 <= std_logic_vector(pc + 4);
+        --
         wait for clock_period;
+        --
+        assert (e_insttype = "01") report "Expected I-type instruction" severity error;
+        assert (e_opcode = "001000") report "Opcode was not 001000" severity error;
+        assert (e_readdata1 = std_logic_vector(unsigned(0, 32))) report "Readdata1 was not 0" severity error;
+        assert (e_imm = "0000000000000100") report "Immediate was not 4" severity error;
+        assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
+        assert (e_forward_mem = '0') report "Memory forwarding was enabled when it should not have disabled" severity error;
+        assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
 
         report "Test 1b: I-type instruction (addi $1, $0, 1) SHOULD EXECUTE";
         pc := pc + 4;
         f_instruction <= "001000" & "00000" & "00001" & "0000000000000001";
         f_pcplus4 <= std_logic_vector(pc + 4);
+        --
         wait for clock_period;
-
-        -- report "Stall for Test 1 to complete (addi $0, $0, 0)";
-        -- pc := pc + 4;
-        -- f_instruction <= "00100000000000000000000000000000";
-        -- f_pcplus4 <= std_logic_vector(pc + 4);
-        -- wait for clock_period;
-
-        -- report "Write back test 1a (addi $0, $0, 0)";
-        -- pc := pc + 4;
-        -- f_instruction <= "00100000000000000000000000000000";
-        -- f_pcplus4 <= std_logic_vector(pc + 4);
-        -- w_regdata <= std_logic_vector(to_unsigned(4, 32));
-        -- wait for clock_period;
+        --
+        assert (e_insttype = "01") report "Expected I-type instruction" severity error;
+        assert (e_opcode = "001000") report "Opcode was not 001000" severity error;
+        assert (e_readdata1 = std_logic_vector(unsigned(0, 32))) report "Readdata1 was not 0" severity error;
+        assert (e_imm = "0000000000000001") report "Immediate was not 1" severity error;
+        assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
+        assert (e_forward_mem = '0') report "Memory forwarding was enabled when it should not have disabled" severity error;
+        assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
 
         -- Test case 2: R-type instruction
         report "Test 2a: R-type instruction with writeback (add $2, $1, $10) SHOULD FORWARD";
         pc := pc + 4;
         f_instruction <= "000000" & "00001" & "01010" & "00010" & "00000" & "100000";
         f_pcplus4 <= std_logic_vector(pc + 4);
+        --
         wait for clock_period;
+        --
+        assert (e_insttype = "00") report "Expected R-type instruction" severity error;
+        assert (e_opcode = "100000") report "Opcode was not 100000" severity error;
+        assert (e_forward_ex = '1') report "Execute forwarding was disabled when it should not have enabled" severity error;
+        assert (e_forwardop_ex = "01") report "Execute forwarding operand should be 01" severity error;
+        assert (e_forward_mem = '1') report "Memory forwarding was disabled when it should not have enabled" severity error;
+        assert (e_forwardop_mem = "10") report "Memory forwarding operand should be 10" severity error;
+        assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
 
-        -- report "Test 2a: R-type instruction with writeback (add $2, $1, $10) SHOULD STALL";
-        -- pc := pc + 4;
-        -- f_pcplus4 <= std_logic_vector(pc + 4);
-        -- w_regdata <= std_logic_vector(to_unsigned(4, 32));
-        -- wait for clock_period;
-
-        -- report "Test 2a: R-type instruction with writeback (add $2, $1, $10) SHOULD EXECUTE";
-        -- pc := pc + 4;
-        -- f_pcplus4 <= std_logic_vector(pc + 4);
-        -- w_regdata <= std_logic_vector(to_unsigned(1, 32));
-        -- wait for clock_period;
-
-        report "Test 2b: R-type instruction without writeback (sub $3, $10, $1) SHOULD FORWARD";
+        report "Test 2b: R-type instruction without writeback (add $3, $10, $10) SHOULD FORWARD";
         pc := pc + 4;
-        f_instruction <= "000000" & "01010" & "00001" & "00011" & "00000" & "100010";
+        f_instruction <= "000000" & "01010" & "01010" & "00011" & "00000" & "100000";
         f_pcplus4 <= std_logic_vector(pc + 4);
         w_regdata <= std_logic_vector(to_unsigned(4, 32));
+        --
         wait for clock_period;
-
-        -- report "Stall for Test 2 to complete (addi $0, $0, $0)";
-        -- pc := pc + 4;
-        -- f_instruction <= "00100000000000000000000000000000";
-        -- f_pcplus4 <= std_logic_vector(pc + 4);
-        -- w_regdata <= std_logic_vector(to_unsigned(0, 32));
-        -- wait for clock_period;
-
-        -- report "Stall for Test 2 to complete (addi $0, $0, $0)";
-        -- pc := pc + 4;
-        -- f_instruction <= "00100000000000000000000000000000";
-        -- f_pcplus4 <= std_logic_vector(pc + 4);
-        -- w_regdata <= std_logic_vector(to_unsigned(5, 32));
-        -- wait for clock_period;
-
-        -- report "Stall for Test 2 to complete (addi $0, $0, $0)";
-        -- pc := pc + 4;
-        -- f_instruction <= "00100000000000000000000000000000";
-        -- f_pcplus4 <= std_logic_vector(pc + 4);
-        -- w_regdata <= std_logic_vector(to_unsigned(3, 32));
-        -- wait for clock_period;
+        --
+        assert (e_insttype = "00") report "Expected R-type instruction" severity error;
+        assert (e_opcode = "100000") report "Opcode was not 100000" severity error;
+        assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
+        assert (e_forward_mem = '1') report "Memory forwarding was disabled when it should not have enabled" severity error;
+        assert (e_forwardop_mem = "11") report "Memory forwarding operand should be 11" severity error;
+        assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
 
         -- Test case 3: J-type instructions
         report "Test 3a: Jump instruction (j 0x123abc) SHOULD EXECUTE";
@@ -196,14 +184,28 @@ begin
         f_instruction <= "000010" & "00000100100011101010111100";
         f_pcplus4 <= std_logic_vector(pc + 4);
         w_regdata <= std_logic_vector(to_unsigned(1, 32));
+        --
         wait for clock_period;
+        --
+        assert (e_insttype = "10") report "Expected J-type instruction" severity error;
+        assert (e_opcode = "000010") report "Opcode was not 000010" severity error;
+        assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
+        assert (e_forward_mem = '0') report "Memory forwarding was enabled when it should not have disabled" severity error;
+        assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
 
         report "Test 3b: Jump and link instruction (jal 0x456def) SHOULD EXECUTE";
         pc := pc + 4;
         f_instruction <= "000011" & "00010001010110110111101111";
         f_pcplus4 <= std_logic_vector(pc + 4);
         w_regdata <= std_logic_vector(to_unsigned(5, 32));
+        --
         wait for clock_period;
+        --
+        assert (e_insttype = "10") report "Expected J-type instruction" severity error;
+        assert (e_opcode = "000011") report "Opcode was not 000011" severity error;
+        assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
+        assert (e_forward_mem = '0') report "Memory forwarding was enabled when it should not have disabled" severity error;
+        assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
 
         -- Reset pipeline
         f_reset <= '1';
@@ -216,29 +218,67 @@ begin
         f_instruction <= "100011" & "00000" & "00100" & "0111100010010001";
         f_pcplus4 <= std_logic_vector(pc + 4);
         w_regdata <= std_logic_vector(to_unsigned(0, 32));
+        --
         wait for clock_period;
+        --
+        assert (e_insttype = "01") report "Expected I-type instruction" severity error;
+        assert (e_opcode = "100011") report "Opcode was not 100011" severity error;
+        assert (e_readdata1 = std_logic_vector(unsigned(0, 32))) report "Readdata1 was not 0" severity error;
+        assert (e_imm = "0111100010010001") report "Immediate was not 0111100010010001" severity error;
+        assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
+        assert (e_forward_mem = '0') report "Memory forwarding was enabled when it should not have disabled" severity error;
+        assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
 
-        report "Test 4b: Add instruction (add $5 $4 $10) SHOULD STALL";
+        report "Test 4b: Add instruction (add $5 $4 $1) SHOULD STALL";
         pc := pc + 4;
-        f_instruction <= "000000" & "00101" & "00100" & "01010" & "00000" & "100000";
+        f_instruction <= "000000" & "00100" & "00001" & "00101" & "00000" & "100000";
         f_pcplus4 <= std_logic_vector(pc + 4);
         w_regdata <= std_logic_vector(to_unsigned(0, 32));
+        --
         wait for clock_period;
+        --
+        assert (e_insttype = "00") report "Expected R-type instruction" severity error;
+        assert (e_opcode = "100000") report "Opcode was not 100000" severity error;
+        assert (e_readdata1 = std_logic_vector(unsigned(0, 32))) report "Readdata1 was not 0" severity error;
+        assert (e_imm = "0000000000000000") report "Immediate was not 0" severity error;
+        assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
+        assert (e_forward_mem = '0') report "Memory forwarding was enabled when it should not have disabled" severity error;
+        assert (f_stall = '1') report "Stall signal was low when there should have been a stall" severity error;
 
-        report "Test 4b: Add instruction (add $5 $4 $10) SHOULD FORWARD";
+        report "Test 4b: Add instruction (add $5 $4 $1) SHOULD FORWARD";
         pc := pc + 4;
-        f_instruction <= "000000" & "00101" & "00100" & "01010" & "00000" & "100000";
+        f_instruction <= "000000" & "00100" & "00001" & "00101" & "00000" & "100000";
         f_pcplus4 <= std_logic_vector(pc + 4);
         w_regdata <= std_logic_vector(to_unsigned(0, 32));
+        --
         wait for clock_period;
+        --
+        assert (e_insttype = "00") report "Expected R-type instruction" severity error;
+        assert (e_opcode = "100000") report "Opcode was not 100000" severity error;
+        assert (e_readdata2 = std_logic_vector(unsigned(1, 32))) report "Readdata2 was not 1" severity error;
+        assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
+        assert (e_forward_mem = '1') report "Memory forwarding was disabled when it should not have enabled" severity error;
+        assert (e_forwardop_mem = "10") report "Memory forwarding operand should be 10" severity error;
+        assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
 
         -- Test case 5: Shamt instruction
-        report "Test 5: Logical right shift (srl $6 $1 3)";
+        report "Test 5: Logical right shift (srl $6 $10 1)";**************************
         pc := pc + 4;
-        f_instruction <= "000000" & "00000" & "00001" & "00110" & "00011" & "000010";
+        f_instruction <= "000000" & "00000" & "01010" & "00110" & "00001" & "000010";
         f_pcplus4 <= std_logic_vector(pc + 4);
         w_regdata <= std_logic_vector(to_unsigned(8, 32));
+        --
         wait for clock_period;
+        --
+        assert (e_insttype = "00") report "Expected R-type instruction" severity error;
+        assert (e_opcode = "000010") report "Opcode was not 000010" severity error;
+        assert (e_readdata1 = std_logic_vector(unsigned(1, 32))) report "Readdata1 was not 1" severity error;
+        assert (e_readdata2 = std_logic_vector(unsigned(4, 32))) report "Readdata2 was not 4" severity error;
+        assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
+        assert (e_forward_mem = '0') report "Memory forwarding was enabled when it should not have disabled" severity error;
+        assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
+
+        --- END OF UNIT TESTS ---
 
         report "Stall for the rest of the test";
         pc := pc + 4;
