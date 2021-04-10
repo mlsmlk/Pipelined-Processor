@@ -42,8 +42,16 @@ architecture behavior of decode_tb is
             e_readdata2 : out std_logic_vector(31 downto 0);
             -- Extended immediate value
             e_imm : out std_logic_vector(31 downto 0);
-            -- Signal to execute or memory stage to forward a value
-            e_forward : out std_logic
+            -- Signal to Execute to use the forwarded value from Execute
+            e_forward_ex : out std_logic;
+            -- Indicate which operand the forwarded value from Execute maps to
+            -- "10" = readdata1 || "01" = readdata2 || "11" = both
+            e_forwardop_ex : out std_logic_vector(1 downto 0);
+            -- Signal to Execute to use the forwarded value from Memory
+            e_forward_mem : out std_logic;
+            -- Indicate which operand the forwarded value from Memory maps to
+            -- "10" = readdata1 || "01" = readdata2 || "11" = both
+            e_forwardop_mem : out std_logic_vector(1 downto 0)
         );
     end component;
     
@@ -64,6 +72,10 @@ architecture behavior of decode_tb is
     signal e_readdata2 : std_logic_vector(31 downto 0);
     signal e_imm : std_logic_vector(31 downto 0);
     signal e_forward : std_logic;
+    signal e_forward_ex : std_logic;
+    signal e_forwardop_ex : std_logic_vector(1 downto 0);
+    signal e_forward_mem : std_logic;
+    signal e_forwardop_mem : std_logic_vector(1 downto 0);
 
 begin
     -- Connect the component to the signals
@@ -82,7 +94,10 @@ begin
         e_readdata1 => e_readdata1,
         e_readdata2 => e_readdata2,
         e_imm => e_imm,
-        e_forward => e_forward
+        e_forward_ex => e_forward_ex,
+        e_forwardop_ex => e_forwardop_ex,
+        e_forward_mem => e_forward_mem,
+        e_forwardop_mem => e_forwardop_mem
     );
 
     -- Drive the clock
