@@ -124,7 +124,7 @@ architecture arch of decode is
         end if;
         -- If the instruction in Memory is going to write back to the target register, we can
         -- forward the value instead
-        return wb_queue(next_wb_idx) = wb_queue(reg);
+        return wb_queue(next_wb_idx) = reg;
     end function;
 
 begin
