@@ -63,6 +63,7 @@ begin
                     mem_addr <= program_counter;
 					mem_read <= '1';
                 end if;
+                program_counter <= std_logic_vector(to_unsigned(to_integer(unsigned(program_counter)) + 4, 32)));
             end if;
         end if;
     end process;
