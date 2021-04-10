@@ -167,6 +167,9 @@ begin
                 is_load_queue(i) <= '0';
 			end loop;
             wb_queue_idx <= 0;
+            -- Clear forwarding signals
+            sig_forward_ex <= '0';
+            sig_forward_mem <= '0';
 
         -- Process incoming instruction
         elsif (rising_edge(clock)) then
@@ -268,6 +271,10 @@ begin
                 sig_opcode <= opcode;
                 address := f_instruction(25 downto 0);
                 
+                -- No forwarding with J-type instructions
+                sig_forward_ex <= '0';
+                sig_forward_mem <= '0';
+
                 -- If jump and link, update the link register with PC + 8
                 if (opcode = "000011") then
                     registers_var(LR_IDX) := std_logic_vector(unsigned(f_pcplus4) + 4);
