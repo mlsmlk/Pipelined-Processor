@@ -234,8 +234,9 @@ begin
 					sig_rw_flag <= "01";
 				-- Store word (sign extend)
 				when SW =>
-					sig_alu <= e_readdata2;
+					sig_alu <= std_logic_vector(signed(e_readdata1) + signed(e_imm));
 					sig_rw_flag <= "10";
+					sig_writedata <= e_readdata2;
 			
 			-- Control-flow
 				-- Branch on equal
@@ -262,8 +263,6 @@ begin
 					sig_alu <= std_logic_vector(signed(f_nextPC) + "1000");
 					sig_br_addr <= e_readdata1;
 					sig_br_flag <= '1';
-					
-		sig_writedata <= e_readdata2
 		
 	end execute_proc;	
 	
