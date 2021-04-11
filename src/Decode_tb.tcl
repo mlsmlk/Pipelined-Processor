@@ -36,5 +36,5 @@ force -deposit clock 0 0 ns, 1 0.5 ns -repeat 1 ns
 ;# Add the waves
 AddWaves
 
-;# Run for 50 ns
-run 50ns
+;# Run for 25 ns
+run 25ns
