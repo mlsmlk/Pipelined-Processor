@@ -34,11 +34,13 @@ entity execute is
         -- Indicate which operand the forwarded value from Memory maps to
         -- "10" = readdata1 || "01" = readdata2 || "11" = both
         e_forwardop_mem : in std_logic_vector(1 downto 0);
+		  -- Forwarded data from memory
+		  e_forward_data : in std_logic_vector(31 downto 0);
         
         --- OUTPUTS ---
         -- To the Memory stage
         alu_result : out std_logic_vector(31 downto 0);
-        readdata2 : out std_logic_vector(31 downto 0);
+        writedata : out std_logic_vector(31 downto 0);
 		  readwrite_flag: out std_logic_vector(1 downto 0);
 		  -- Branch
 		  branch_taken: OUT STD_LOGIC;
@@ -103,8 +105,6 @@ architecture arch of execute is
 	-- MFHI, MFLO read from them
 	signal HI : std_logic_vector(31 downto 0);
 	signal LO : std_logic_vector(31 downto 0);
-	-- PC
-	signal PC : std_logic_vector(31 downto 0);
 	
 	-- Output signals
 	signal sig_alu : std_logic_vector(31 downto 0);
@@ -121,12 +121,29 @@ begin
 		
 		-- input
 		variable inst_type : std_logic_vector(1 downto 0);
+		variable readdata1 : std_logic_vector(31 downto 0);
+		variable readdata2 : std_logic_vector(31 downto 0);
 		
 		-- result of multiplication
 		variable product : std_logic_vector(63 downto 0);
 	
 	begin
 		registers_var := registers;
+		
+		-- Forwarding (execution)
+		if(e_forward_ex=='1') then
+			if(e_forwardop_ex=="10") then readdata1 := alu_result;
+			elsif(e_forwardop_ex=="01") then readdata2 := alu_result;
+			elsif(e_forwardop_ex=="11) then
+				readdata1 := alu_result;
+				readdata2 := alu_result;
+		-- Forwarding (memory)
+		if(e_forward_mem=='1') then
+			if(e_forwardop_mem=="10") then readdata1 := e_forward_data
+			if(e_forwardop_mem=="10") then readdata2 := e_forward_data;
+			if(e_forwardop_mem=="11") then
+				readdata1 := e_forward_data;
+				readdata2 := e_forward_data;
 		
 		-- Get alu according type of instruction
 		inst_type := e_insttype;
@@ -139,41 +156,41 @@ begin
 			-- Arithmetic
 				-- Add rs+rt
 				when ADD =>
-					sig_alu <= std_logic_vector(signed(e_readdata1) + signed(e_readdata2));
+					sig_alu <= std_logic_vector(signed(readdata1) + signed(readdata2));
 				-- Subtract
 				When SUB =>
-					sig_alu <= std_logic_vector(signed(e_readdata1) + signed(e_readdata2));
+					sig_alu <= std_logic_vector(signed(readdata1) + signed(readdata2));
 				
 				-- directly write to HI and LO
 				-- Multiply
 				when MULT =>
-					product <= std_logic_vector(signed(e_readdata1) * signed(e_readdata2));
+					product <= std_logic_vector(signed(readdata1) * signed(readdata2));
 					HI <= product(63 downto 32);
 					LO <= product(31 downto 0);
-					sig_alu <= LO	-- TODO: pass low to alu?
+					sig_alu <= LO;	-- TODO: pass low to alu?
 				-- Divide
 				When DIV =>
-					sig_alu <= std_logic_vector(signed(e_readdata1)/signed(e_readdata2));
-					HI <= std_logic_vector(signed(e_readdata1) mod signed(e_readdata2));
-					LO <= std_logic_vector(signed(e_readdata1)/signed(e_readdata2));
+					sig_alu <= std_logic_vector(signed(readdata1)/signed(readdata2));
+					HI <= std_logic_vector(signed(readdata1) mod signed(readdata2));
+					LO <= std_logic_vector(signed(readdata1)/signed(readdata2));
 				-- Set less than
 				when SLT =>
-					if (e_readdata1<e_readdata2) then sig_alu <= std_logic_vector(resize('1', 32));
+					if (readdata1<readdata2) then sig_alu <= std_logic_vector(resize('1', 32));
 					else sig_alu <= std_logic_vector(resize('0', 32));
 					
 			-- Logical
 				-- And
 				when L_AND =>
-					sig_alu <= e_readdata1 and e_readdata2;
+					sig_alu <= readdata1 and readdata2;
 				-- Or
 				when L_OR =>
-					sig_alu <= e_readdata1 or e_readdata2;
+					sig_alu <= readdata1 or readdata2;
 				-- Nor
 				when L_NOR =>
-					sig_alu <= e_readdata1 nor e_readdata2;
+					sig_alu <= readdata1 nor readdata2;
 				-- Xor
 				when L_XOR =>
-					sig_alu <= e_readdata1 xor e_readdata2;
+					sig_alu <= readdata1 xor readdata2;
 					
 			-- Transfer
 				-- Move from HI
@@ -186,17 +203,17 @@ begin
 			-- Shift
 				-- Shift left logical
 				when S_SLL =>
-					sig_alu <= e_readdata2 << e_readdata1;
+					sig_alu <= readdata2 << readdata1;
 				-- Shift right logical
 				when S_SRL =>
-					sig_alu <= e_readdata2 >> e_readdata1;
+					sig_alu <= readdata2 >> readdata1;
 				-- Shift right arithmetic
 				when S_SRA =>
-					sig_alu <= e_readdata2 >>> e_readdata1;
+					sig_alu <= readdata2 >>> readdata1;
 			-- Control-flow
 				-- Jump register	-- branch_ddr = rs
 				when JR =>
-					sig_br_addr <= e_readdata1;
+					sig_br_addr <= readdata1;
 					sig_br_flag <= '1';
 		
 		-- I-type rs=readdata1 rt=readdata2
@@ -205,23 +222,23 @@ begin
 			-- Arithmetic
 				-- AddI
 				when ADDI =>
-					sig_alu <= std_logic_vector(signed(e_readdata1) + signed(e_imm));
+					sig_alu <= std_logic_vector(signed(readdata1) + signed(e_imm));
 				-- SltI
 				when SLTI =>
-					if(e_readdata1 < e_imm) then 
+					if(readdata1 < e_imm) then 
 						sig_alu <= std_logic_vector(resize('1', 32));
 					else sig_alu <= std_logic_vector(resize('0', 32));
 		
 			-- Logical
 				-- AndI
 				when ANDI =>
-					sig_alu <= e_readdata1 and e_imm;
+					sig_alu <= readdata1 and e_imm;
 				-- OrI
 				when ORI =>
-					sig_alu <= e_readdata1 or e_imm;
+					sig_alu <= readdata1 or e_imm;
 				-- XorI
 				when XORI =>
-					sig_alu <= e_readdata1 xor e_imm;
+					sig_alu <= readdata1 xor e_imm;
 			-- Transfer
 				-- Load upper I
 				when LUI =>
@@ -230,24 +247,24 @@ begin
 			-- Memory -- directly access mem
 				-- Load word (sign extend)
 				when LW =>
-					sig_alu <= std_logic_vector(signed(e_readdata1) + signed(e_imm));
+					sig_alu <= std_logic_vector(signed(readdata1) + signed(e_imm));
 					sig_rw_flag <= "01";
 				-- Store word (sign extend)
 				when SW =>
-					sig_alu <= std_logic_vector(signed(e_readdata1) + signed(e_imm));
+					sig_alu <= std_logic_vector(signed(readdata1) + signed(e_imm));
 					sig_rw_flag <= "10";
-					sig_writedata <= e_readdata2;
+					sig_writedata <= readdata2;
 			
 			-- Control-flow
 				-- Branch on equal
 				when BEQ =>
-					if(e_readdata1==e_readdata2) then
-						sig_br_addr <= std_logic_vector(signed(f_nextPC) + signed(e_imm) + "0100");
+					if(readdata1==readdata2) then
+						sig_br_addr <= std_logic_vector(signed(f_nextPC) + signed(e_imm) + 4);
 						sig_br_flag <= '1';
 				-- Branch on not equal
 				when BNE =>
-					if(e_readdata1!=e_readdata2) then 
-						sig_br_addr <= std_logic_vector(signed(f_nextPC) + signed(e_imm) + "0100");
+					if(readdata1!=readdata2) then 
+						sig_br_addr <= std_logic_vector(signed(f_nextPC) + signed(e_imm) + 4);
 						sig_br_flag <= '1'; 
 		
 		-- J-type
@@ -256,18 +273,18 @@ begin
 			-- Control-flow
 				-- Jump
 				when J =>
-					sig_br_addr <= e_readdata1;
+					sig_br_addr <= readdata1;
 					sig_br_flag <= '1'; 
 				-- Jump and link
 				when JAL =>
 					sig_alu <= std_logic_vector(signed(f_nextPC) + "1000");
-					sig_br_addr <= e_readdata1;
+					sig_br_addr <= readdata1;
 					sig_br_flag <= '1';
 		
 	end execute_proc;	
 	
 	alu_result <= sig_alu;
-   readdata2 <= sig_writedata;
+   writedata <= sig_writedata;
 	readwrite_flag <= sig_rw_flag;
 	branch_taken <= sig_br_flag;
 	branch_target_addr <= sig_br_addr;	
