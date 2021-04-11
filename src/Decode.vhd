@@ -374,13 +374,10 @@ begin
 
                     -- Extend the immediate value
                     case (opcode) is
-                        when LUI =>
-                            -- Upper immediate shift
-                            sig_imm <= std_logic_vector(shift_left(resize(unsigned(imm), 32), 16));
                         when BEQ | BNE =>
                             -- Address extend
                             sig_imm <= std_logic_vector(shift_left(resize(signed(imm), 32), 2));
-                        when ANDI | ORI | XORI =>
+                        when LUI | ANDI | ORI | XORI =>
                             -- Zero extend
                             sig_imm <= std_logic_vector(resize(unsigned(imm), 32));
                         when others =>
