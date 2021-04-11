@@ -41,48 +41,58 @@ architecture rtl of data_memory is
 	 
 begin
 	mem_process : process (clock)
+		variable ram_block : MEM;
+		variable read_address_reg : integer range 0 to ram_size - 1;
+		variable write_waitreq_reg : STD_LOGIC := '1';
+		variable read_waitreq_reg : STD_LOGIC := '1';
+		variable m_addr : integer range 0 to ram_size - 1;
+		variable m_read : std_logic;
+		variable m_readdata : std_logic_vector (31 downto 0);
+		variable m_write : std_logic;
+		variable m_writedata : std_logic_vector (31 downto 0);
+		variable m_waitrequest : std_logic;
+		variable initialization_flag : std_logic := '0';
 		file memoryFile : text open write_mode is "memory.txt";
 		variable outLine : line; 
 	begin
-		m_addr <= to_integer(unsigned(alu_in));
+		m_addr := to_integer(unsigned(alu_in));
 		--This is a cheap trick to initialize the SRAM in simulation
 		if (now < 1 ps) then
 			for i in 0 to ram_size - 1 loop
-				ram_block(i) <= std_logic_vector(to_unsigned(i, 32));
+				ram_block(i) := std_logic_vector(to_unsigned(i, 32));
 			end loop;
-			initialization_flag <= '1';
+			initialization_flag := '1';
 		end if;
 
 		--This is the actual synthesizable SRAM block
 		if (clock'EVENT and clock = '1') then
 			if readwrite_flag = "01" then -- If the request is read
 				mem_flag <= '1'; -- deinfe memory related flag to 1
-				m_write <= '0';
-				m_read <= '1';
+				m_write := '0';
+				m_read := '1';
 
 			elsif readwrite_flag = "10" then -- If the request is write
 				mem_flag <= '1'; -- deinfe memory related flag to 1
-				m_write <= '1';
-				m_read <= '0';
-				m_writedata <= mem_in;
+				m_write := '1';
+				m_read := '0';
+				m_writedata := mem_in;
 
 			else --If the request is else
 				mem_flag <= '0'; -- there nothing related to memory
-				m_write <= 'X';
-				m_read <= 'X';
+				m_write := 'X';
+				m_read := 'X';
 				mem_res <= "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
 			end if;
 
 			if (m_write = '1') then
-				ram_block(m_addr) <= m_writedata;
-				initialization_flag <= '0';
+				ram_block(m_addr) := m_writedata;
+				initialization_flag := '0';
 			end if;
-			read_address_reg <= m_addr;
+			read_address_reg := m_addr;
  
 			if (initialization_flag = '0') then
 				mem_res <= ram_block(read_address_reg);
- 
-			end if;
+ 			end if;
 			alu_res <= alu_in;
 		end if;
 		if (write_file_flag = '1') then

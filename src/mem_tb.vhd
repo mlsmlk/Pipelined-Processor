@@ -2,10 +2,10 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity data_memory_tb is
-end data_memory_tb;
+entity mem_tb is
+end mem_tb;
 
-architecture behaviour of data_memory_tb is
+architecture behaviour of mem_tb is
 	component data_memory is
 		port (
 			clock : in std_logic;
@@ -23,6 +23,18 @@ architecture behaviour of data_memory_tb is
 		);
 	end component;
 
+	component write_back is
+
+		port (
+			clk : in std_logic; -- clock
+			mem_res : in std_logic_vector (31 downto 0); 	-- read data from mem stage
+			alu_res : in std_logic_vector (31 downto 0); 	-- alu result from ex stage
+			mem_flag : in std_logic; 			-- MUX flag (1- read mem, 0-read ALU result)
+			write_data : out std_logic_vector(31 downto 0) 	-- data to write back to send Decode stage
+		);
+
+	end component;
+
 
 	signal clock : std_logic := '0';
 	constant clk_period : time := 1 ns;
@@ -34,8 +46,9 @@ architecture behaviour of data_memory_tb is
 	signal mem_res : std_logic_vector (31 downto 0); 
 	signal alu_res : std_logic_vector (31 downto 0);
 	signal write_file_flag :  std_logic;
+	signal write_data : std_logic_vector(31 downto 0);
 begin
-	dut : data_memory
+	dm : data_memory
 	port map(
 		clock => clock, 
 		alu_in => alu_in, 
@@ -45,6 +58,15 @@ begin
 		mem_res => mem_res, 
 		alu_res => alu_res, 
 		mem_flag => mem_flag
+	);
+
+	wb : write_back
+	port map(
+		clk => clock, 
+		mem_res => mem_res, 
+		alu_res => alu_res, 
+		mem_flag => mem_flag, 
+		write_data => write_data
 	);
 
 	clk_process : process
@@ -63,42 +85,35 @@ begin
 		readwrite_flag <= "10";
 		mem_in <= "11111111111111111111111111111111";
 		alu_in <= "00000000000000000000000000000001";
+		wait for clk_period *2;
+		assert (write_data = "11111111111111111111111111111111") report "ALU RESULT" severity ERROR;
 		wait for clk_period;
-		assert (mem_flag = '1') report "MEM FLAG ERROR" severity ERROR;
-		assert (mem_res = "11111111111111111111111111111111") report "MEM RES ERROR" severity ERROR;
-		assert (alu_res = "00000000000000000000000000000001") report "ALU RES ERROR" severity ERROR;
 
 		report "Test CASE 2: Write Flag - VARIABLE 2";
 		readwrite_flag <= "10";
 		mem_in <= "11111111111111111111111111111000";
 		alu_in <= "00000000000000000000000000001111";
-		wait for clk_period;
-		assert (mem_flag = '1') report "MEM FLAG ERROR" severity ERROR;
-		assert (mem_res = "11111111111111111111111111111000") report "MEM RES ERROR" severity ERROR;
-		assert (alu_res = "00000000000000000000000000001111") report "ALU RES ERROR" severity ERROR;
+		wait for clk_period *2;
+		assert (write_data = "11111111111111111111111111111000") report "ALU RESULT" severity ERROR;
 
 		report "Test CASE 3: Non mem related ";
 		readwrite_flag <= "00";
 		alu_in <= "00000000000000000000000000001111";
-		wait for clk_period;
-		assert (mem_flag = '0') report "MEM FLAG ERROR" severity ERROR;
+		wait for clk_period * 2;
+		assert (write_data = "00000000000000000000000000001111") report "ALU RESULT" severity ERROR;
 
 		report "Test CASE 4: Read Flag - VARIABLE 1";
 		readwrite_flag <= "01";
 		alu_in <= "00000000000000000000000000000001";
-		wait for clk_period;
-		assert (mem_flag = '1') report "MEM FLAG ERROR" severity ERROR;
-		assert (mem_res = "11111111111111111111111111111111") report "MEM RES ERROR" severity ERROR;
-		assert (alu_res = "00000000000000000000000000000001") report "ALU RES ERROR" severity ERROR;
+		wait for clk_period * 2;
+		assert (write_data = "11111111111111111111111111111111") report "ALU RESULT" severity ERROR;
 
 		report "Test CASE 5: Read Flag - VARIABLE 2";
 		readwrite_flag <= "01";
 		alu_in <= "00000000000000000000000000001111";
-		wait for clk_period;
-		assert (mem_flag = '1') report "MEM FLAG ERROR" severity ERROR;
-		assert (mem_res = "11111111111111111111111111111000") report "MEM RES ERROR" severity ERROR;
-		assert (alu_res = "00000000000000000000000000001111") report "ALU RES ERROR" severity ERROR;
-		
+		wait for clk_period * 2;
+		assert (write_data = "11111111111111111111111111111000") report "ALU RESULT" severity ERROR;
+
 		write_file_flag <= '1';
 		report "--------------END-----------------";
 		wait;
