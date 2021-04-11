@@ -112,6 +112,11 @@ begin
     test_process : process
         variable pc : unsigned(31 downto 0) := (others => '0');
     begin
+
+        ---------------------------------
+        -- HAZARD AND FORWARDING TESTS --
+        ---------------------------------
+
         report "Starting Decode test bench";
         f_reset <= '1';
         wait for clock_period;
@@ -226,7 +231,7 @@ begin
         assert (e_insttype = "01") report "Expected I-type instruction" severity error;
         assert (e_opcode = "100011") report "Opcode was not 100011" severity error;
         assert (e_readdata1 = std_logic_vector(to_unsigned(0, 32))) report "Readdata1 was not 0" severity error;
-        assert (e_imm = "11111111111111111000011110010001") report "Immediate was not 1000011110010001" severity error;
+        assert (e_imm = "11111111111111111000011110010001") report "Immediate was not 1000011110010001 sign-extended" severity error;
         assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
         assert (e_forward_mem = '0') report "Memory forwarding was enabled when it should not have disabled" severity error;
         assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
@@ -279,6 +284,41 @@ begin
         assert (e_forward_ex = '0') report "Execute forwarding was enabled when it should not have disabled" severity error;
         assert (e_forward_mem = '0') report "Memory forwarding was enabled when it should not have disabled" severity error;
         assert (f_stall = '0') report "Stall signal was high when there was no stall" severity error;
+
+        -- Reset pipeline
+        f_reset <= '1';
+        wait for clock_period;
+        f_reset <= '0';
+
+        --------------------------------------
+        -- ADDITIONAL IMMEDIATE VALUE TESTS --
+        --------------------------------------
+
+        -- Test case 6: Branch address instruction
+        report "Test 6: Branch on equal (beq $0 $0 0x9123)";
+        pc := pc + 4;
+        f_instruction <= "000100" & "00000" & "00000" & "1001000100100011";
+        f_pcplus4 <= std_logic_vector(pc + 4);
+        w_regdata <= std_logic_vector(to_unsigned(0, 32));
+        --
+        wait for clock_period;
+        --
+        assert (e_insttype = "01") report "Expected I-type instruction" severity error;
+        assert (e_opcode = "000100") report "Opcode was not 000100" severity error;
+        assert (e_imm = "11111111111111100100010010001100") report "Immediate was not properly address-extended" severity error;
+
+        -- Test case 7: Unsigned extended value instruction
+        report "Test 7: Load upper immediate (lui $1 0x9123)";
+        pc := pc + 4;
+        f_instruction <= "001111" & "00000" & "00000" & "1001000100100011";
+        f_pcplus4 <= std_logic_vector(pc + 4);
+        w_regdata <= std_logic_vector(to_unsigned(0, 32));
+        --
+        wait for clock_period;
+        --
+        assert (e_insttype = "01") report "Expected I-type instruction" severity error;
+        assert (e_opcode = "001111") report "Opcode was not 001111" severity error;
+        assert (e_imm = "00000000000000001001000100100011") report "Immediate was not zero-extended" severity error;
 
         --- END OF UNIT TESTS ---
 
