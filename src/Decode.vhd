@@ -57,42 +57,42 @@ architecture arch of decode is
 
     ----- OPCODES -----
 	--- R-type
-	constant ADD : opcode := "100000";
-	constant SUB : opcode := "100010";
-	constant MULT : opcode := "011000";
-	constant DIV : opcode := "011010";
-	constant SLT : opcode := "101010";
-	constant L_AND : opcode := "100100";
-	constant L_OR : opcode := "100101";
-	constant L_NOR : opcode := "100111";
-	constant L_XOR : opcode := "100110";
-	constant MFHI : opcode := "010000";
-	constant MFLO : opcode := "010010";
-	constant S_SLL : opcode := "000000";
-	constant S_SRL : opcode := "000010";
-	constant S_SRA : opcode := "000011";
-	constant JR : opcode := "001000";
+	constant ADD : std_logic_vector(5 downto 0) := "100000";
+	constant SUB : std_logic_vector(5 downto 0) := "100010";
+	constant MULT : std_logic_vector(5 downto 0) := "011000";
+	constant DIV : std_logic_vector(5 downto 0) := "011010";
+	constant SLT : std_logic_vector(5 downto 0) := "101010";
+	constant L_AND : std_logic_vector(5 downto 0) := "100100";
+	constant L_OR : std_logic_vector(5 downto 0) := "100101";
+	constant L_NOR : std_logic_vector(5 downto 0) := "100111";
+	constant L_XOR : std_logic_vector(5 downto 0) := "100110";
+	constant MFHI : std_logic_vector(5 downto 0) := "010000";
+	constant MFLO : std_logic_vector(5 downto 0) := "010010";
+	constant S_SLL : std_logic_vector(5 downto 0) := "000000";
+	constant S_SRL : std_logic_vector(5 downto 0) := "000010";
+	constant S_SRA : std_logic_vector(5 downto 0) := "000011";
+	constant JR : std_logic_vector(5 downto 0) := "001000";
 	
 	--- I-type
 	-- Arithmetic
-	constant ADDI : opcode := "001000";
-	constant SLTI : opcode := "001010";
+	constant ADDI : std_logic_vector(5 downto 0) := "001000";
+	constant SLTI : std_logic_vector(5 downto 0) := "001010";
 	-- Logical
-	constant ANDI : opcode := "001100";
-	constant ORI : opcode := "001101";
-	constant XORI : opcode := "001110";
+	constant ANDI : std_logic_vector(5 downto 0) := "001100";
+	constant ORI : std_logic_vector(5 downto 0) := "001101";
+	constant XORI : std_logic_vector(5 downto 0) := "001110";
 	-- Transfer
-	constant LUI : opcode := "001111";
+	constant LUI : std_logic_vector(5 downto 0) := "001111";
 	-- Memory
-	constant LW : opcode := "100011";			
-	constant SW : opcode := "101011";					
+	constant LW : std_logic_vector(5 downto 0) := "100011";			
+	constant SW : std_logic_vector(5 downto 0) := "101011";					
 	-- Control-flow
-	constant BEQ : opcode := "000100";
-	constant BNE : opcode := "000101";
+	constant BEQ : std_logic_vector(5 downto 0) := "000100";
+	constant BNE : std_logic_vector(5 downto 0) := "000101";
 	
 	--- J-type
-	constant J : opcode := "000010";
-	constant JAL : opcode := "000011";
+	constant J : std_logic_vector(5 downto 0) := "000010";
+	constant JAL : std_logic_vector(5 downto 0) := "000011";
 
     ----- TYPE DEFINITIONS -----
     type writeback_queue is array(0 to 2) of natural range 0 to NUM_REGISTERS - 1;
