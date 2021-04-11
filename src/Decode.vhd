@@ -285,7 +285,7 @@ begin
                     -- force Execute to ignore any value coming out of readdata
                     
                     -- If the instruction is a shift, use shamt instead of Rs for readdata1
-                    if (funct = "000000" or funct = "000010" or funct = "000011") then
+                    if (funct = S_SLL or funct = S_SRL or funct = S_SRA) then
                         sig_readdata1 <= std_logic_vector(resize(unsigned(shamt), 32));
                     else
                         sig_readdata1 <= registers_var(reg_s_idx);
@@ -295,7 +295,7 @@ begin
                     sig_readdata2 <= registers_var(reg_t_idx);
 
                     -- For all instructions other than jump register, set Rd as writeback
-                    if (funct /= "001000") then
+                    if (funct /= JR and funct /= MULT and funct /= DIV) then
                         wb_queue(wb_queue_idx) <= reg_d_idx;
                     else
                         wb_queue(wb_queue_idx) <= 0;
@@ -304,7 +304,7 @@ begin
                     -- Store the funct for forwarding purposes
                     is_load_queue(wb_queue_idx) <= '0';
                 end if;
-            elsif (opcode = "000011" or opcode = "000010") then
+            elsif (opcode = J or opcode = JAL) then
                 -- J-type instruction
                 sig_insttype <= "10";
                 sig_opcode <= opcode;
@@ -315,7 +315,7 @@ begin
                 sig_forward_mem <= '0';
 
                 -- If jump and link, update the link register with PC + 8
-                if (opcode = "000011") then
+                if (opcode = JAL) then
                     registers_var(LR_IDX) := std_logic_vector(unsigned(f_pcplus4) + 4);
                 end if;
                 
@@ -374,13 +374,13 @@ begin
 
                     -- Extend the immediate value
                     case (opcode) is
-                        when "001111" =>
+                        when LUI =>
                             -- Upper immediate shift
                             sig_imm <= std_logic_vector(shift_left(resize(unsigned(imm), 32), 16));
-                        when "000100" | "000101" =>
+                        when BEQ | BNE =>
                             -- Address extend
                             sig_imm <= std_logic_vector(shift_left(resize(signed(imm), 32), 2));
-                        when "001100" | "001101" | "001110" =>
+                        when ANDI | ORI | XORI =>
                             -- Zero extend
                             sig_imm <= std_logic_vector(resize(unsigned(imm), 32));
                         when others =>
@@ -389,14 +389,14 @@ begin
                     end case;                    
 
                     -- Add writeback register to queue, if there is one
-                    if (opcode /= "000100" and opcode /= "000101" and opcode /= "101011") then
+                    if (opcode /= BEQ and opcode /= BNE and opcode /= SW) then
                         wb_queue(wb_queue_idx) <= reg_t_idx;
                     else
                         wb_queue(wb_queue_idx) <= 0;
                     end if;
 
                     -- If instruction is a load, take note for forwarding purposes
-                    if (opcode = "100011") then
+                    if (opcode = LW) then
                         is_load_queue(wb_queue_idx) <= '1';
                     else
                         is_load_queue(wb_queue_idx) <= '0';
@@ -408,7 +408,7 @@ begin
             if (hazard_exists = '1') then
                 -- Stall pipeline with 'addi $0 $0 0' instruction
                 sig_insttype <= "01";
-                sig_opcode <= "001000";
+                sig_opcode <= ADDI;
                 sig_readdata1 <= (others => '0');
                 sig_imm <= (others => '0');
                 wb_queue(wb_queue_idx) <= 0;
