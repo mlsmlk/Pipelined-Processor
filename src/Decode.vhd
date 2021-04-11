@@ -55,6 +55,45 @@ architecture arch of decode is
     constant NUM_REGISTERS : natural := 32;
     constant LR_IDX : natural := 31; -- Link register index
 
+    ----- OPCODES -----
+	--- R-type
+	constant ADD : opcode := "100000";
+	constant SUB : opcode := "100010";
+	constant MULT : opcode := "011000";
+	constant DIV : opcode := "011010";
+	constant SLT : opcode := "101010";
+	constant L_AND : opcode := "100100";
+	constant L_OR : opcode := "100101";
+	constant L_NOR : opcode := "100111";
+	constant L_XOR : opcode := "100110";
+	constant MFHI : opcode := "010000";
+	constant MFLO : opcode := "010010";
+	constant S_SLL : opcode := "000000";
+	constant S_SRL : opcode := "000010";
+	constant S_SRA : opcode := "000011";
+	constant JR : opcode := "001000";
+	
+	--- I-type
+	-- Arithmetic
+	constant ADDI : opcode := "001000";
+	constant SLTI : opcode := "001010";
+	-- Logical
+	constant ANDI : opcode := "001100";
+	constant ORI : opcode := "001101";
+	constant XORI : opcode := "001110";
+	-- Transfer
+	constant LUI : opcode := "001111";
+	-- Memory
+	constant LW : opcode := "100011";			
+	constant SW : opcode := "101011";					
+	-- Control-flow
+	constant BEQ : opcode := "000100";
+	constant BNE : opcode := "000101";
+	
+	--- J-type
+	constant J : opcode := "000010";
+	constant JAL : opcode := "000011";
+
     ----- TYPE DEFINITIONS -----
     type writeback_queue is array(0 to 2) of natural range 0 to NUM_REGISTERS - 1;
     type instruction_is_load_queue is array(0 to 2) of std_logic;
