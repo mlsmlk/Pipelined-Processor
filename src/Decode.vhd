@@ -8,6 +8,9 @@ entity decode is
         -- Clock --
         clock : in std_logic;
 
+        -- Flag for writing the register file to a text file
+        write_reg_file : in std_logic;
+
         -- From the Fetch stage --
         -- The instruction to be parsed
         f_instruction : in std_logic_vector(31 downto 0);
@@ -167,6 +170,19 @@ architecture arch of decode is
     end function;
 
 begin
+    -- Prints out the register file when the flag is raised
+    print_reg_file: process (write_reg_file)
+        file register_file : text open write_mode is "registers.txt";
+        variable line_out : line;
+    begin
+        if (rising_edge(write_reg_file)) then
+            for index in 0 to NUM_REGISTERS - 1 loop
+                write(line_out, registers(index));
+                writeline(register_file, line_out);
+            end loop;
+        end if;
+    end process;
+
     decode_proc: process (clock, f_reset)
         ----- VARIABLES -----
         -- Replica of the register file to help simplify the write back process
