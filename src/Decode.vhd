@@ -229,25 +229,23 @@ begin
             -- Clear forwarding signals
             sig_forward_ex <= '0';
             sig_forward_mem <= '0';
-        
-        -- If a branch was taken, the pipeline must be flushed
-        elsif (f_reset = '1') then
-            -- Set register 0 to have a value of 0
-            registers_var(0) := (others => '0');
-            -- Clear the queue
-            for i in 0 to 2 loop
-                wb_queue(i) <= 0;
-                is_load_queue(i) <= '0';
-            end loop;
-            wb_queue_idx <= 0;
-            -- Clear forwarding signals
-            sig_forward_ex <= '0';
-            sig_forward_mem <= '0';
 
         -- Process incoming instruction
         elsif (rising_edge(clock)) then
+            -- If a branch was taken, the pipeline must be flushed
+            if (f_reset = '1') then
+                -- Set register 0 to have a value of 0
+                registers_var(0) := (others => '0');
+                -- Clear the queue
+                for i in 0 to 2 loop
+                    wb_queue(i) <= 0;
+                    is_load_queue(i) <= '0';
+                end loop;
+                -- Clear forwarding signals
+                sig_forward_ex <= '0';
+                sig_forward_mem <= '0';
             -- Perform a writeback operation if necessary
-            if (wb_queue(wb_queue_idx) /= 0) then
+            elsif (wb_queue(wb_queue_idx) /= 0) then
                 registers_var(wb_queue(wb_queue_idx)) := w_regdata;
             end if;
 
