@@ -13,6 +13,9 @@ architecture behavior of decode_tb is
             -- Clock --
             clock : in std_logic;
 
+            -- Flag for writing the register file to a text file
+            write_reg_file : in std_logic;
+
             -- From the Fetch stage --
             -- The instruction to be parsed
             f_instruction : in std_logic_vector(31 downto 0);
@@ -59,6 +62,7 @@ architecture behavior of decode_tb is
     -- Inputs
     signal clock : std_logic := '0';
     constant clock_period : time := 1 ns;
+    signal write_reg_file : std_logic := '0';
     signal f_instruction : std_logic_vector(31 downto 0);
     signal f_reset : std_logic;
     signal f_pcplus4 : std_logic_vector(31 downto 0);
@@ -82,6 +86,7 @@ begin
     port map(
         -- Inputs
         clock => clock,
+        write_reg_file => write_reg_file,
         f_instruction => f_instruction,
         f_reset => f_reset,
         f_pcplus4 => f_pcplus4,
@@ -319,6 +324,16 @@ begin
         assert (e_insttype = "01") report "Expected I-type instruction" severity error;
         assert (e_opcode = "001111") report "Opcode was not 001111" severity error;
         assert (e_imm = "00000000000000001001000100100011") report "Immediate was not zero-extended" severity error;
+
+        -------------------------------------
+        -- TEST PRINTING THE REGISTER FILE --
+        -------------------------------------
+        report "Test 8: Print register file";
+        write_reg_file <= '1';
+        --
+        wait for clock_period;
+        --
+        write_reg_file <= '0';
 
         --- END OF UNIT TESTS ---
 
