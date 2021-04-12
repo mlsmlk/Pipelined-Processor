@@ -1,3 +1,9 @@
 Assembler/Driver.class
 Assembler/program.txt
 Assembler/*.asm
+
+*.mti
+*.mpf
+*.bak
+*.wlf
+work
