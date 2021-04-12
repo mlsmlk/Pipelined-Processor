@@ -8,17 +8,8 @@ entity fetch is
     );
     port(
         --- INPUTS ---
-        -- Clock + Reset + PC
+        -- Clock + PC
         clock : in std_logic;
-        reset : in std_logic; -- Reset necessary?
-        program_counter_in : out std_logic_vector(31 downto 0);
-        -- Instruction Memory interface
-        m_addr : out integer range 0 to ram_size-1;
-        m_read : out std_logic;
-        m_readdata : in std_logic_vector (7 downto 0);
-        m_write : out std_logic;
-        m_writedata : out std_logic_vector (7 downto 0);
-        m_waitrequest : in std_logic
         -- From Execute stage
         jump_address : in std_logic_vector(31 downto 0);
         jump_flag : in std_logic;
@@ -35,11 +26,25 @@ end fetch;
 architecture arch of fetch is
     -- Constants and signals to be defined
     signal program_counter : std_logic_vector(31 downto 0) := 00000000000000000000000000000000;
-    signal mem_read : std_logic := '0'; -- High when reading from main memory
-    signal mem_addr : integer range 0 to ram_size-1; -- Address of target byte in memory
     signal reset_to_decode: std_logic := '0';
-    signal mem_readdata : std_logic_vector(31 downto 0);
+    signal im_readdata : std_logic_vector(31 downto 0);
+
+    component instruction_memory
+        PORT (
+            clock: in std_logic;
+            address: in std_logic_vector(31 downto 0);
+            readdata: out std_logic_vector(31 downto 0)
+        );
+    end component;
+
 begin
+
+    IM: instruction_memory
+    port map (
+        clock;
+        program_counter;
+        readdata
+    );
 
     fetch_process: process (clock, reset)
         -- Variables to be defined
@@ -53,22 +58,15 @@ begin
                     program_counter <= jump_address;
                     reset_to_decode <= '1';
                 else
-                    program_counter <= program_counter_in;
+                    -- Increment PC by 4 if no branch
+                    program_counter <= std_logic_vector(to_unsigned(to_integer(unsigned(program_counter)) + 4, 32)));
                     reset_to_decode <= '0';
-                    -- If not stalling or branching, return the result of the previous instruction read
-                    mem_read <= '0';
                 end if;
-                -- Check waitrequest, then fetch
-                if (m_waitrequest = '0') then
-                    mem_addr <= program_counter;
-					mem_read <= '1';
-                end if;
-                program_counter <= std_logic_vector(to_unsigned(to_integer(unsigned(program_counter)) + 4, 32)));
             end if;
         end if;
     end process;
     -- Assignment here
     reset_out <= reset_to_decode;
     program_counter_out <= program_counter;
-    instruction <= m_readdata;
+    instruction <= readdata;
 end arch;
