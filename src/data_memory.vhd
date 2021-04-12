@@ -97,8 +97,6 @@ begin
 		end if;
 		if (write_file_flag = '1') then
 			for index in 0 to ram_size-1 loop
-			write(outLine, index);
-			writeline(memoryFile, outLine);
 			write(outLine, ram_block(index));
 			writeline(memoryFile, outLine); 
 		end loop;
