@@ -25,7 +25,7 @@ end fetch;
 
 architecture arch of fetch is
     -- Constants and signals to be defined
-    signal program_counter : std_logic_vector(31 downto 0) := 00000000000000000000000000000000;
+    signal program_counter : std_logic_vector(31 downto 0) := "00000000000000000000000000000000";
     signal reset_to_decode: std_logic := '0';
     signal im_readdata : std_logic_vector(31 downto 0);
 
@@ -41,12 +41,12 @@ begin
 
     IM: instruction_memory
     port map (
-        clock;
-        program_counter;
-        readdata
+        clock,
+        program_counter,
+        im_readdata
     );
 
-    fetch_process: process (clock, reset)
+    fetch_process: process (clock)
         -- Variables to be defined
     begin
         if (rising_edge(clock)) then
@@ -59,7 +59,7 @@ begin
                     reset_to_decode <= '1';
                 else
                     -- Increment PC by 4 if no branch
-                    program_counter <= std_logic_vector(to_unsigned(to_integer(unsigned(program_counter)) + 4, 32)));
+                    program_counter <= std_logic_vector(to_unsigned(to_integer(unsigned(program_counter)) + 4, 32));
                     reset_to_decode <= '0';
                 end if;
             end if;
@@ -68,5 +68,5 @@ begin
     -- Assignment here
     reset_out <= reset_to_decode;
     program_counter_out <= program_counter;
-    instruction <= readdata;
+    instruction <= im_readdata;
 end arch;

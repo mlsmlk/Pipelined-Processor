@@ -1,6 +1,15 @@
 proc AddWaves {} {
 	;#Add waves we're interested in to the Wave window
-	add wave -position end  sim:/instruction_memory_tb/dut/clock
+	add wave -position end  sim:/fetch_tb/dut/clock
+	add wave -position end  sim:/fetch_tb/dut/jump_address
+	add wave -position end  sim:/fetch_tb/dut/jump_flag
+	add wave -position end  sim:/fetch_tb/dut/stall_pipeline
+	add wave -position end  sim:/fetch_tb/dut/instruction
+	add wave -position end  sim:/fetch_tb/dut/program_counter_out
+	add wave -position end  sim:/fetch_tb/dut/reset_out
+	add wave -position end  sim:/fetch_tb/dut/program_counter
+	add wave -position end  sim:/fetch_tb/dut/reset_to_decode
+	add wave -position end  sim:/fetch_tb/dut/im_readdata
 }
 
 vlib work

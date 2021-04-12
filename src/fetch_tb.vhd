@@ -28,11 +28,16 @@ component fetch is
     );
 end component;
 
--- test signals 
-signal program_counter : std_logic_vector(31 downto 0) := 00000000000000000000000000000000;
-signal im_read : std_logic := '0'; -- High when reading from main memory
+-- test signals
+signal clk : std_logic := '0';
+constant clk_period : time := 1 ns;
+signal jump_address : std_logic_vector(31 downto 0) := (others => '0');
+signal jump_flag : std_logic;
+signal stall_pipeline : std_logic;
+signal reset_out : std_logic;
+signal program_counter : std_logic_vector(31 downto 0) := "00000000000000000000000000000000";
 signal reset_to_decode: std_logic := '0';
-signal im_readdata : std_logic_vector(31 downto 0);
+signal instruction : std_logic_vector(31 downto 0) := (others => '0');
 
 -- Assert will be used many times so package and track the amount of errors
 procedure assert_equal(actual, expected : in std_logic_vector(31 downto 0); error_count : inout integer) is
@@ -54,7 +59,7 @@ port map(
     jump_address,
     jump_flag,
     stall_pipeline,
-    im_readdata,
+    instruction,
     program_counter,
     reset_out
 );
@@ -78,13 +83,12 @@ begin
 
     pc_temp := (others=>'0');
 		
-    ASSERT (s_PC = pc_temp) REPORT "PC is not initialized to 0!" Severity ERROR; --PC = 0
-
-    wait for clk_period;
+    ASSERT (program_counter = pc_temp) REPORT "PC is not initialized to 0!" Severity ERROR; --PC = 0
 		
-    --Require 1 clock cycle to get instruction from memory
+    -- Wait 
+    wait for clk_period;
     
-    ASSERT (s_IR = "00100000000010110000011111010000") REPORT "PC = 0 is wrong" SEVERITY ERROR;
+    ASSERT (instruction = "00100000000010100000000000000100") REPORT "PC = 0 is wrong" SEVERITY ERROR;
 
     Report "Testbench complete";
     
