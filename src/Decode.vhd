@@ -178,8 +178,8 @@ begin
         variable line_out : line;
     begin
         if (rising_edge(write_reg_file)) then
-            for index in 0 to NUM_REGISTERS - 1 loop
-                write(line_out, registers(index));
+            for i in 0 to NUM_REGISTERS - 1 loop
+                write(line_out, registers(i));
                 writeline(register_file, line_out);
             end loop;
         end if;
@@ -214,8 +214,23 @@ begin
         -- Create an alias of the register file to allow the register file to be changed within CC
         registers_var := registers;
 
-        -- Either starting up or a branch was taken, so the pipeline must be flushed
-        if (f_reset = '1') or (now < 1 ps) then
+        -- If just starting, set all registers to 0
+        if (now < 1 ps) then
+            -- Set register 0 to have a value of 0
+            for i in 0 to NUM_REGISTERS - 1 loop
+                registers_var(i) := (others => '0');
+            -- Clear the queue
+            for i in 0 to 2 loop
+                wb_queue(i) <= 0;
+                is_load_queue(i) <= '0';
+            end loop;
+            wb_queue_idx <= 0;
+            -- Clear forwarding signals
+            sig_forward_ex <= '0';
+            sig_forward_mem <= '0';
+        
+        -- If a branch was taken, the pipeline must be flushed
+        elsif (f_reset = '1') then
             -- Set register 0 to have a value of 0
             registers_var(0) := (others => '0');
             -- Clear the queue
