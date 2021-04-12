@@ -219,6 +219,7 @@ begin
             -- Set register 0 to have a value of 0
             for i in 0 to NUM_REGISTERS - 1 loop
                 registers_var(i) := (others => '0');
+            end loop;
             -- Clear the queue
             for i in 0 to 2 loop
                 wb_queue(i) <= 0;
