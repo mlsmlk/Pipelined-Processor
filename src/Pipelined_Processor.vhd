@@ -5,9 +5,12 @@ use ieee.numeric_std.all;
 entity pipelined_processor is
     port(
         --- INPUTS ---
-        -- Clock --
+        -- Clock
         clock : in std_logic;
-        reset : in std_logic
+        -- Reset the processor (PC starts at 0)
+        reset : in std_logic;
+        -- Tell the processor to print out the memory and register values
+        write_to_file : in std_logic
     );
 end pipelined_processor;
 
@@ -16,11 +19,25 @@ architecture arch of pipelined_processor is
     -- COMPONENT DECLARATIONS --
     ----------------------------
 
-    --- INSTRUCTION MEMORY ---
-    -- ***TODO***
-
     --- INSTRUCTION FETCH ---
-    -- ***TODO***
+    component fetch is
+        port(
+            --- INPUTS ---
+            -- Clock
+            clock : in std_logic;
+            reset : in std_logic;
+            -- From Execute stage
+            jump_address : in std_logic_vector(31 downto 0);
+            jump_flag : in std_logic;
+            stall_pipeline : in std_logic;
+
+            --- OUTPUTS ---
+            -- To Decode stage
+            instruction : out std_logic_vector(31 downto 0);
+            program_counter_out : out std_logic_vector(31 downto 0);
+            reset_out : out std_logic
+        );
+    end component;
 
     --- DECODE ---
     component decode is
@@ -117,11 +134,20 @@ begin
     -- CONNECTING COMPONENTS TOGETHER --
     ------------------------------------
 
-    --- INSTRUCTION MEMORY ---
-    -- ***TODO***
-
     --- INSTRUCTION FETCH ---
-    -- ***TODO***
+    instf : fetch
+    port map(
+        -- Inputs
+        clock,
+        reset,
+        jump_address => ???,
+        jump_flag => ???,
+        stall_pipeline => f_stall,
+        -- Outputs
+        instruction => f_instruction,
+        program_counter_out => f_pcplus4,
+        reset_out => f_reset
+    );
 
     --- DECODE ---
     dec : decode
@@ -129,12 +155,12 @@ begin
         -- Inputs
         clock,
         write_reg_file => ???,
-        f_instruction => ???,
-        f_reset => ???,
-        f_pcplus4 => ???,
+        f_instruction => instruction,
+        f_reset => reset_out,
+        f_pcplus4 => program_counter_out,
         w_regdata => write_data,
         -- Outputs
-        f_stall => ???,
+        f_stall => stall_pipeline,
         e_insttype => ???,
         e_opcode => ???,
         e_readdata1 => ???,
