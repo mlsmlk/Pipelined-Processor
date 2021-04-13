@@ -261,7 +261,7 @@ begin
         pc := pc + 4;
         f_instruction <= "000000" & "00000" & "01010" & "00110" & "00001" & "000010";
         f_pcplus4 <= std_logic_vector(pc + 4);
-        w_regdata <= std_logic_vector(to_unsigned(8, 32));
+        w_regdata <= std_logic_vector(to_unsigned(0, 32));
         --
         wait for clock_period;
         --
