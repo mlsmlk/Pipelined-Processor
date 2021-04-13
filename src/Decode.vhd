@@ -106,11 +106,13 @@ architecture arch of decode is
 
     ----- SIGNALS -----
     -- Register file
-    signal registers: register_file;
+    signal registers : register_file;
     -- For writing back
-    signal wb_queue: writeback_queue; -- Stores which register will be written back to next
-    signal is_load_queue: instruction_is_load_queue; -- Stores the associated instruction with each register
+    signal wb_queue : writeback_queue; -- Stores which register will be written back to next
+    signal is_load_queue : instruction_is_load_queue; -- Stores the associated instruction with each register
     signal wb_queue_idx : natural range 0 to 2 := 0;
+    -- For stalls
+    signal stalled_inst : std_logic_vector(31 downto 0); -- Store the stalled instruction
     -- Output registers
     signal sig_stall : std_logic;
     signal sig_insttype : std_logic_vector(1 downto 0);
@@ -190,6 +192,7 @@ begin
         -- Replica of the register file to help simplify the write back process
         variable registers_var : register_file;
         -- General instruction components
+        variable instruction : std_logic_vector(31 downto 0);
         variable opcode : std_logic_vector(5 downto 0);
         variable reg_s_idx : natural range 0 to NUM_REGISTERS - 1; -- First operand register index
         variable reg_s_data : std_logic_vector(31 downto 0); -- First operand register data
@@ -249,22 +252,31 @@ begin
                 registers_var(wb_queue(wb_queue_idx)) := w_regdata;
             end if;
 
+            -- If a stall is happening, use the stalled instruction, not the one shown by Fetch
+            if (sig_stall = '1') then
+                instruction := stalled_inst;
+            else
+                instruction := f_instruction;
+            end if;
+
+            -- Assume no hazard exists until one is detected
+            hazard_exists := '0';
+
             -- Identify the type of the instruction
-            opcode := f_instruction(31 downto 26);
+            opcode := instruction(31 downto 26);
             if (opcode = "000000") then
                 -- R-type instruction
                 sig_insttype <= "00";
-                reg_s_idx := to_integer(unsigned(f_instruction(25 downto 21)));
-                reg_t_idx := to_integer(unsigned(f_instruction(20 downto 16)));
-                reg_d_idx := to_integer(unsigned(f_instruction(15 downto 11)));
-                shamt := f_instruction(10 downto 6);
-                funct := f_instruction(5 downto 0);
+                reg_s_idx := to_integer(unsigned(instruction(25 downto 21)));
+                reg_t_idx := to_integer(unsigned(instruction(20 downto 16)));
+                reg_d_idx := to_integer(unsigned(instruction(15 downto 11)));
+                shamt := instruction(10 downto 6);
+                funct := instruction(5 downto 0);
                 
                 -- Use funct as the opcode
                 sig_opcode <= funct;
 
                 -- Check for any hazards
-                hazard_exists := '0';
                 forward_ex := '0';
                 op_ex := "00";
                 forward_mem := '0';
@@ -340,7 +352,7 @@ begin
                 -- J-type instruction
                 sig_insttype <= "10";
                 sig_opcode <= opcode;
-                address := f_instruction(25 downto 0);
+                address := instruction(25 downto 0);
                 
                 -- No forwarding with J-type instructions
                 sig_forward_ex <= '0';
@@ -363,12 +375,11 @@ begin
                 -- I-type instruction
                 sig_insttype <= "01";
                 sig_opcode <= opcode;
-                reg_s_idx := to_integer(unsigned(f_instruction(25 downto 21)));
-                reg_t_idx := to_integer(unsigned(f_instruction(20 downto 16)));
-                imm := f_instruction(15 downto 0);
+                reg_s_idx := to_integer(unsigned(instruction(25 downto 21)));
+                reg_t_idx := to_integer(unsigned(instruction(20 downto 16)));
+                imm := instruction(15 downto 0);
 
                 -- Check for any hazards
-                hazard_exists := '0';
                 forward_ex := '0';
                 op_ex := "00";
                 forward_mem := '0';
@@ -445,6 +456,9 @@ begin
 
                 -- Signal to the instruction fetch stage to stop processing instructions
                 sig_stall <= '1';
+
+                -- Save the stalled instruction
+                stalled_inst <= instruction;
             else
                 -- Safe to continue processing instructions
                 sig_stall <= '0';
