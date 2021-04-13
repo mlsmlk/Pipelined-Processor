@@ -1,6 +1,7 @@
 proc AddWaves {} {
 	;#Add waves we're interested in to the Wave window
 	add wave -position end  sim:/fetch_tb/dut/clock
+	add wave -position end  sim:/fetch_tb/dut/reset
 	add wave -position end  sim:/fetch_tb/dut/jump_address
 	add wave -position end  sim:/fetch_tb/dut/jump_flag
 	add wave -position end  sim:/fetch_tb/dut/stall_pipeline

@@ -60,49 +60,53 @@ test_process : process
 begin
 
     Report "Starting test bench";
-    WAIT until rising_edge(clk);
+    wait until rising_edge(clk);
 
     -- Test case 1: Read the first instruction
     report "Test 1: Read Instruction 1";
-    address       <= (others=>'0');
-    WAIT until rising_edge(clk);
+    address       <= std_logic_vector(to_unsigned(0*4, 32));
+    wait until rising_edge(clk);
     assert_equal(readdata, "00100000000010100000000000000100", error_count);
 
     -- Test case 2: Read second instruction @ address 4
     report "Test 2: Read Instruction 2";
-    address       <= (2 => '1', others=>'0');
-    WAIT until rising_edge(clk);
+    address       <= std_logic_vector(to_unsigned(1*4, 32));
+    wait until rising_edge(clk);
     assert_equal(readdata, "00100000000000010000000000000001", error_count);
 
     -- Test case 3: Read sixth instruction @ address 24
     report "Test 3: Read Instruction 6";
     address       <= std_logic_vector(to_unsigned(5*4, 32));
-    WAIT until rising_edge(clk);
+    wait until rising_edge(clk);
     assert_equal(readdata, "00100000010000110000000000000000", error_count);
 
     -- Test case 4: Read 14th instruction
-    report "Test 3: Read Instruction 14";
+    report "Test 4: Read Instruction 14";
     address       <= std_logic_vector(to_unsigned(13*4, 32));
-    WAIT until rising_edge(clk);
+    wait until rising_edge(clk);
     assert_equal(readdata, "00010101010000001111111111110111", error_count);
 
      -- Test case 5: Read 15th (last) instruction
-    report "Test 3: Read Instruction 15 (last)";
+    report "Test 5: Read Instruction 15 (last)";
     address       <= std_logic_vector(to_unsigned(14*4, 32));
-    WAIT until rising_edge(clk);
+    wait until rising_edge(clk);
     assert_equal(readdata, "00010001011010111111111111111111", error_count);
 
-    -- Test case 5: Read undefined instruction
-    report "Test 3: Read Instruction 16 (none)";
-    address       <= std_logic_vector(to_unsigned(15*4, 32));
-    WAIT until rising_edge(clk);
-    --assert_equal(readdata, "00010001011010111111111111111111", error_count);
+     -- Test case 6: Read ninth instruction
+     report "Test 5: Read Instruction 15 (last)";
+     address       <= std_logic_vector(to_unsigned(8*4, 32));
+     wait until rising_edge(clk);
+     assert_equal(readdata, "00000001010011110000000000011000", error_count);
 
+    -- Test case 7: Read instruction past program limit
+    report "Test 7: Read Instruction past program limit";
+    address       <= std_logic_vector(to_unsigned(25*4, 32));
+    wait until rising_edge(clk);
+    assert_equal(readdata, "00000001010011110000000000011000", error_count);
 
-
-    Report "Testbench complete\n";
+    Report "Testbench complete";
     report "Error count: " & integer'image(error_count);
-    wait for 100000ns;
+    wait;
 end process;
 	
 end;

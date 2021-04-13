@@ -10,6 +10,7 @@ entity fetch is
         --- INPUTS ---
         -- Clock + PC
         clock : in std_logic;
+        reset : in std_logic;
         -- From Execute stage
         jump_address : in std_logic_vector(31 downto 0);
         jump_flag : in std_logic;
@@ -50,9 +51,11 @@ begin
         -- Variables to be defined
     begin
         if (rising_edge(clock)) then
+            if (reset = '1') then
+                program_counter <= (others => '0');
             -- If we are not stalling then check if we are branching/jumping
             -- If stall, then do nothing
-            if (stall_pipeline = '0') then
+            elsif (stall_pipeline = '0') then
                 -- If jumping, set program counter to new address and get new instruction
                 if (jump_flag = '1') then
                     program_counter <= jump_address;
@@ -67,6 +70,6 @@ begin
     end process;
     -- Assignment here
     reset_out <= reset_to_decode;
-    program_counter_out <= program_counter;
+    program_counter_out <= std_logic_vector(unsigned(program_counter) + 4);
     instruction <= im_readdata;
 end arch;
