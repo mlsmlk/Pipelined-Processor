@@ -257,11 +257,11 @@ begin
         assert (e_forward_mem = '0') report "Memory forwarding was enabled when it should not have disabled" severity error;
         assert (f_stall = '1') report "Stall signal was low when there should have been a stall" severity error;
 
-        report "Test 4b: Add instruction (add $5 $4 $1) SHOULD FORWARD";
+        report "Test 4b: Logical right shift (srl $6 $10 1) SHOULD EXECUTE PREVIOUS INSTRUCTION";
         pc := pc + 4;
-        f_instruction <= "000000" & "00100" & "00001" & "00101" & "00000" & "100000";
+        f_instruction <= "000000" & "00000" & "01010" & "00110" & "00001" & "000010";
         f_pcplus4 <= std_logic_vector(pc + 4);
-        w_regdata <= std_logic_vector(to_unsigned(0, 32));
+        w_regdata <= std_logic_vector(to_unsigned(8, 32));
         --
         wait for clock_period;
         --
