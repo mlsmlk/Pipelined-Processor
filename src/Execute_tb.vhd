@@ -162,11 +162,14 @@ begin
 		f_reset <= '0';
 		
 		-- Without forwarding
+		e_forward_ex <= '0';
+		e_forward_mem <= '0';
+		
 		-- R-type 
 		e_insttype <= "00";
 			--shift: data1=shamt, data2=rt
 			-- otherwise data1=rs, data2=rt
-		report "===========R-type instructions==========";
+		report "============R-type instructions==========";
 		--- Arithmetic
 		report "---------------Arithmetic----------------";
 		-- Add

@@ -104,7 +104,6 @@ begin
 		----- VARIABLES -----
 		
 		-- input
-		variable inst_type : std_logic_vector(1 downto 0);
 		variable readdata1 : std_logic_vector(31 downto 0);
 		variable readdata2 : std_logic_vector(31 downto 0);
 		
@@ -141,12 +140,11 @@ begin
 			end if;
 			
 			-- Get alu according type of instruction
-			inst_type := e_insttype;
 			
 			-- R-type
 			-- shift: data1=shamt, data2=rt
 			-- otherwise data1=rs, data2=rt
-			if(inst_type = "00") then
+			if(e_insttype = "00") then
 				case e_opcode is
 				-- Arithmetic
 					-- Add rs+rt
@@ -214,7 +212,7 @@ begin
 					end case;
 			
 			-- I-type rs=readdata1 rt=readdata2
-			elsif(inst_type="01") then
+			elsif(e_insttype="01") then
 				case e_opcode is 
 				-- Arithmetic
 					-- AddI
@@ -268,7 +266,7 @@ begin
 					when others => report "Unreachable!" severity FAILURE;
 					end case;
 			-- J-type
-			elsif(inst_type="10") then
+			elsif(e_insttype="10") then
 				case e_opcode is 
 				-- Control-flow
 					-- Jump
