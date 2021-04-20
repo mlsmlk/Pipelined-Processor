@@ -242,7 +242,7 @@ begin
 			-- Transfer
 				-- Load upper I
 				when LUI =>
-					sig_alu <= e_imm << "010000";
+					sig_alu <= e_imm << 16;
 			
 			-- Memory -- directly access mem
 				-- Load word (sign extend)
@@ -277,7 +277,7 @@ begin
 					sig_br_flag <= '1'; 
 				-- Jump and link
 				when JAL =>
-					sig_alu <= std_logic_vector(signed(f_nextPC) + "1000");
+					sig_alu <= std_logic_vector(signed(f_nextPC) + 8);
 					sig_br_addr <= readdata1;
 					sig_br_flag <= '1';
 		
