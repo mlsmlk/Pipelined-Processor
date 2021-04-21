@@ -35,10 +35,10 @@ entity execute is
         -- To the Memory stage
         alu_result : out std_logic_vector(31 downto 0);
         writedata : out std_logic_vector(31 downto 0);
-        readwrite_flag: out std_logic_vector(1 downto 0);
+        readwrite_flag : out std_logic_vector(1 downto 0);
         -- Branch
-        branch_taken: OUT STD_LOGIC;
-        branch_target_addr: OUT STD_LOGIC_VECTOR (31 DOWNTO 0)
+        branch_taken : out STD_LOGIC;
+        branch_target_addr : out STD_LOGIC_VECTOR (31 downto 0)
     );
 end execute;
 
@@ -106,13 +106,17 @@ begin
         -- input
         variable readdata1 : std_logic_vector(31 downto 0);
         variable readdata2 : std_logic_vector(31 downto 0);
+
+        -- Keep track of if readdata is forwarded or not
+        variable d1_isforwarded : std_logic;
+        variable d2_isforwarded : std_logic;
         
         -- result of multiplication
         variable product : std_logic_vector(63 downto 0);
     
     begin
         
-        if (now < 1 ps) then
+        if (now < 1 ps or f_reset = '1') then
             sig_alu <= std_logic_vector(to_unsigned(0, 32));
             sig_writedata <= std_logic_vector(to_unsigned(0, 32));
             sig_rw_flag <= "00";	-- Neither
@@ -120,23 +124,47 @@ begin
             sig_br_addr <= std_logic_vector(to_unsigned(0, 32));
         
         elsif (rising_edge(clock)) then
+            -- Initially assume no forwarding
+            d1_isforwarded := '0';
+            d2_isforwarded := '0';
+
             -- Forwarding (execution)
             if(e_forward_ex='1') then
-                if(e_forwardop_ex="10") then readdata1 := sig_alu;
-                elsif(e_forwardop_ex="01") then readdata2 := sig_alu;
+                if(e_forwardop_ex="10") then
+                    readdata1 := sig_alu;
+                    d1_isforwarded := '1';
+                elsif(e_forwardop_ex="01") then
+                    readdata2 := sig_alu;
+                    d2_isforwarded := '1';
                 elsif(e_forwardop_ex="11") then
                     readdata1 := sig_alu;
+                    d1_isforwarded := '1';
                     readdata2 := sig_alu;
+                    d2_isforwarded := '1';
                 end if;
             end if;
             -- Forwarding (memory)
             if(e_forward_mem='1') then
-                if(e_forwardop_mem="10") then readdata1 := e_forward_data;
-                elsif(e_forwardop_mem="10") then readdata2 := e_forward_data;
+                if(e_forwardop_mem="10") then
+                    readdata1 := e_forward_data;
+                    d1_isforwarded := '1';
+                elsif(e_forwardop_mem="10") then
+                    readdata2 := e_forward_data;
+                    d2_isforwarded := '1';
                 elsif(e_forwardop_mem="11") then
                     readdata1 := e_forward_data;
+                    d1_isforwarded := '1';
                     readdata2 := e_forward_data;
+                    d2_isforwarded := '1';
                 end if;
+            end if;
+
+            -- If readdata1 or readdata2 is not forwarded, then use decode output
+            if (d1_isforwarded = '0') then
+                readdata1 := e_readdata1;
+            end if;
+            if (d2_isforwarded = '0') then
+                readdata2 := e_readdata2;
             end if;
             
             -- Get alu according type of instruction
@@ -145,6 +173,8 @@ begin
             -- shift: data1=shamt, data2=rt
             -- otherwise data1=rs, data2=rt
             if(e_insttype = "00") then
+                -- R-type instructions never read or write
+                sig_rw_flag <= "00";
                 case e_opcode is
                 -- Arithmetic
                     -- Add rs+rt
@@ -152,7 +182,7 @@ begin
                         sig_alu <= std_logic_vector(signed(readdata1) + signed(readdata2));
                     -- Subtract
                     When SUB =>
-                        sig_alu <= std_logic_vector(signed(readdata1) + signed(readdata2));
+                        sig_alu <= std_logic_vector(signed(readdata1) - signed(readdata2));
                     
                     -- directly write to HI and LO
                     -- Multiply
@@ -160,7 +190,7 @@ begin
                         product := std_logic_vector(signed(readdata1) * signed(readdata2));
                         HI <= product(63 downto 32);
                         LO <= product(31 downto 0);
-                        sig_alu <= LO;	-- TODO: pass low to alu?
+                        sig_alu <= LO;
                     -- Divide
                     When DIV =>
                         sig_alu <= std_logic_vector(signed(readdata1)/signed(readdata2));
@@ -168,8 +198,10 @@ begin
                         LO <= std_logic_vector(signed(readdata1)/signed(readdata2));
                     -- Set less than
                     when SLT =>
-                        if (readdata1<readdata2) then sig_alu <= std_logic_vector(to_unsigned(1, 32));
-                        else sig_alu <= std_logic_vector(to_unsigned(0, 32));
+                        if (readdata1<readdata2) then
+                            sig_alu <= std_logic_vector(to_unsigned(1, 32));
+                        else
+                            sig_alu <= std_logic_vector(to_unsigned(0, 32));
                         end if;
                 -- Logical
                     -- And
@@ -208,8 +240,9 @@ begin
                     when JR =>
                         sig_br_addr <= readdata1;
                         sig_br_flag <= '1';
+                    
                     when others => report "Unreachable!" severity FAILURE;
-                    end case;
+                end case;
             
             -- I-type rs=readdata1 rt=readdata2
             elsif(e_insttype="01") then
@@ -218,26 +251,33 @@ begin
                     -- AddI
                     when ADDI =>
                         sig_alu <= std_logic_vector(signed(readdata1) + signed(e_imm));
+                        sig_rw_flag <= "00";
                     -- SltI
                     when SLTI =>
                         if(readdata1 < e_imm) then 
                             sig_alu <= std_logic_vector(to_unsigned(1, 32));
-                        else sig_alu <= std_logic_vector(to_unsigned(0, 32));
-                        end if;		
+                        else
+                            sig_alu <= std_logic_vector(to_unsigned(0, 32));
+                        end if;
+                        sig_rw_flag <= "00";
                 -- Logical
                     -- AndI
                     when ANDI =>
                         sig_alu <= readdata1 and e_imm;
+                        sig_rw_flag <= "00";
                     -- OrI
                     when ORI =>
                         sig_alu <= readdata1 or e_imm;
+                        sig_rw_flag <= "00";
                     -- XorI
                     when XORI =>
                         sig_alu <= readdata1 xor e_imm;
+                        sig_rw_flag <= "00";
                 -- Transfer
                     -- Load upper I
                     when LUI =>
                         sig_alu <= std_logic_vector(unsigned(e_imm) SLL 16);
+                        sig_rw_flag <= "00";
                 
                 -- Memory -- directly access mem
                     -- Load word (sign extend)
@@ -254,25 +294,31 @@ begin
                     -- Branch on equal
                     when BEQ =>
                         if(readdata1=readdata2) then
-                            sig_br_addr <= std_logic_vector(signed(f_nextPC) + signed(e_imm) + 4);
+                            sig_br_addr <= std_logic_vector(signed(f_nextPC) + signed(e_imm));
                             sig_br_flag <= '1';
                         end if;
+                        sig_rw_flag <= "00";
                     -- Branch on not equal
                     when BNE =>
                         if(readdata1 /= readdata2) then 
-                            sig_br_addr <= std_logic_vector(signed(f_nextPC) + signed(e_imm) + 4);
+                            sig_br_addr <= std_logic_vector(signed(f_nextPC) + signed(e_imm));
                             sig_br_flag <= '1'; 
                         end if;
+                        sig_rw_flag <= "00";
+
                     when others => report "Unreachable!" severity FAILURE;
-                    end case;
+                end case;
             -- J-type
             elsif(e_insttype="10") then
+                -- J-type instructions never read or write
+                sig_rw_flag <= "00";
+
                 case e_opcode is 
                 -- Control-flow
                     -- Jump
                     when J =>
                         sig_br_addr <= readdata1;
-                        sig_br_flag <= '1'; 
+                        sig_br_flag <= '1';
                     -- Jump and link
                     when JAL =>
                         sig_alu <= std_logic_vector(signed(f_nextPC) + 8);
@@ -286,7 +332,7 @@ begin
     end process;
     
     alu_result <= sig_alu;
-   writedata <= sig_writedata;
+    writedata <= sig_writedata;
     readwrite_flag <= sig_rw_flag;
     branch_taken <= sig_br_flag;
     branch_target_addr <= sig_br_addr;	
