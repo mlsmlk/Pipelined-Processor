@@ -159,11 +159,6 @@ begin
                 end if;
             end if;
 
-            report to_hstring(readdata1);
-            report to_hstring(readdata2);
-            report std_logic'image(d1_isforwarded);
-            report std_logic'image(d2_isforwarded);
-
             -- If readdata1 or readdata2 is not forwarded, then use decode output
             if (d1_isforwarded = '0') then
                 readdata1 := e_readdata1;

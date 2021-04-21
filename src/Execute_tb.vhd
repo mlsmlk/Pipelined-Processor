@@ -435,8 +435,9 @@ begin
         assert (branch_taken = '0') report "Branch should not be taken";
         
         -- Forward from execute to both operands
+        e_insttype <= "00";
         report "Forward from execute stage to both operands";
-        e_opcode <= ADDI;
+        e_opcode <= ADD;
         e_forward_ex <= '1';
         e_forwardop_ex <= "11";
         wait for clock_period;
@@ -444,7 +445,7 @@ begin
 
         -- Forward from execute to one operand
         report "Forward from execute stage to one operand";
-        e_opcode <= ADDI;
+        e_opcode <= ADD;
         e_forward_ex <= '1';
         e_forwardop_ex <= "01";
         e_readdata2 <= std_logic_vector(to_unsigned(1, 32));
@@ -453,7 +454,7 @@ begin
 
         -- Forward from execute and memory
         report "Forward from execute and memory stage simultaneously";
-        e_opcode <= ADDI;
+        e_opcode <= ADD;
         e_forward_ex <= '1';
         e_forwardop_ex <= "01";
         e_forward_mem <= '1';
