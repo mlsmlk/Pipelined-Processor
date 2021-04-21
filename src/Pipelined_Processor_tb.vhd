@@ -10,7 +10,6 @@ architecture behavior of pipelined_processor_tb is
     component pipelined_processor is
         port(
             --- INPUTS ---
-            --- INPUTS ---
             -- Clock
             clock : in std_logic;
             -- Reset the processor (PC starts at 0)

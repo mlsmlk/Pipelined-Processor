@@ -29,6 +29,7 @@ architecture arch of pipelined_processor is
             -- From Execute stage
             jump_address : in std_logic_vector(31 downto 0);
             jump_flag : in std_logic;
+            -- From Decode stage
             stall_pipeline : in std_logic;
 
             --- OUTPUTS ---
@@ -175,9 +176,10 @@ architecture arch of pipelined_processor is
     end component;
 
 
-    -------------------------
-    -- SIGNAL DECLARATIONS --
-    -------------------------
+    -------------------------------------------------
+    --             SIGNAL DECLARATIONS             --
+    -- Used for connecting the components together --
+    -------------------------------------------------
     signal r_branch_target_addr : std_logic_vector(31 downto 0);
     signal r_branch_taken : std_logic;
     signal r_f_stall : std_logic;

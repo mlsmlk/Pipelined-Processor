@@ -11,26 +11,36 @@ ENTITY instruction_memory IS
 		clock_period : time := 1 ns
 	);
 	PORT (
+		--- INPUTS ---
 		clock: IN STD_LOGIC;
+		-- Address in instruction memory to read from
 		address: IN std_logic_vector (31 downto 0);
+
+		--- OUTPUTS ---
+		-- Data read from instruction memory
 		readdata: OUT STD_LOGIC_VECTOR (31 downto 0)
 	);
 END instruction_memory;
 
 ARCHITECTURE rtl OF instruction_memory IS
+	-- Type definition of memory
 	TYPE MEM IS ARRAY(0 to ram_size-1) OF STD_LOGIC_VECTOR(7 downto 0);
+
+	--- SIGNALS ---
+	-- Instruction memory itself
 	SIGNAL ram_block: MEM;
-	SIGNAL read_address_reg: INTEGER RANGE 0 to ram_size-1;
+	-- Stores number of lines in memory in order to detect end of program
 	signal lines_in_memory: integer range 0 to ram_size-1;
+	-- High if memory has been initialized
 	signal mem_initialized : std_logic := '0';
 BEGIN
-	--This is the main section of the SRAM model
+	-- Process for loading in the instructions from the provided .txt file
     mem_process: PROCESS (clock)
-    FILE instructions_file : text;
-	variable instruction_line : line;
-	variable line_data : std_logic_vector(31 downto 0);
-	variable line_counter : integer := 0;
-
+		-- Variables for reading in the file
+		FILE instructions_file : text;
+		variable instruction_line : line;
+		variable line_data : std_logic_vector(31 downto 0);
+		variable line_counter : integer := 0;
 	BEGIN
 		--This is a cheap trick to initialize the SRAM in simulation
         IF(now < 1 ps and mem_initialized = '0')THEN
@@ -49,14 +59,18 @@ BEGIN
                 line_counter := line_counter + 4;
             END LOOP;
 			file_close(instructions_file);
+			-- Store index of last line
 			lines_in_memory <= line_counter - 4;
+			-- Memory has been initialized
 			mem_initialized <= '1';
 		end if;
 
 	END PROCESS;
 	
+	-- Process for reading instructions out to fetch
 	read_process: process (clock, address)
 	begin
+		-- Repeat last instruction if PC goes over the number of lines in memory
 		if (to_integer(unsigned(address)) > lines_in_memory) then
 			readdata(7 downto 0)	<= ram_block(lines_in_memory);
     		readdata(15 downto 8) 	<= ram_block(lines_in_memory + 1);

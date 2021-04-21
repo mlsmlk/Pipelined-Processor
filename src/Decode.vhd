@@ -180,15 +180,17 @@ architecture arch of decode is
 begin
     -- Prints out the register file when the flag is raised
     print_reg_file: process (write_reg_file)
-        file register_file : text open write_mode is "registers.txt";
+        file register_file : text;
         variable line_out : line;
     begin
+        file_open(register_file, "registers.txt", write_mode);
         if (rising_edge(write_reg_file)) then
             for i in 0 to NUM_REGISTERS - 1 loop
                 write(line_out, registers(i));
                 writeline(register_file, line_out);
             end loop;
         end if;
+        file_close(register_file);
     end process;
 
     decode_proc: process (clock, f_reset)

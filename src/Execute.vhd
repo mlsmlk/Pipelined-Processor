@@ -177,7 +177,7 @@ begin
                 end if;
             end if;
 
-            -- If readdata1 or readdata2 is not forwarded, then use decode output
+            -- If readdata1 or readdata2 is not forwarded, then use Decode output
             if (d1_isforwarded = '0') then
                 readdata1 := e_readdata1;
             end if;
@@ -268,7 +268,8 @@ begin
                         sig_alu <= to_stdlogicvector(to_bitvector(readdata2) SRA to_integer(signed(readdata1)));
                         sig_br_flag <= '0';
                 -- Control-flow
-                    -- Jump register	-- branch_ddr = rs
+                    -- Jump register
+                    -- branch_addr = rs
                     when JR =>
                         sig_br_addr <= readdata1;
                         sig_br_flag <= '1';
@@ -334,6 +335,7 @@ begin
                     -- Branch on equal
                     when BEQ =>
                         if(readdata1=readdata2) then
+                            -- Subtract 4 to account for delay between clock cycles
                             sig_br_addr <= std_logic_vector(signed(f_nextPC) + signed(e_imm) - 4);
                             sig_br_flag <= '1';
                         else
@@ -342,7 +344,8 @@ begin
                         sig_rw_flag <= "00";
                     -- Branch on not equal
                     when BNE =>
-                        if(readdata1 /= readdata2) then 
+                        if(readdata1 /= readdata2) then
+                            -- Subtract 4 to account for delay between clock cycles
                             sig_br_addr <= std_logic_vector(signed(f_nextPC) + signed(e_imm) - 4);
                             sig_br_flag <= '1'; 
                         else
@@ -374,6 +377,7 @@ begin
 
     end process;
     
+    -- Assign signals to output
     alu_result <= sig_alu;
     writedata <= sig_writedata;
     readwrite_flag <= sig_rw_flag;

@@ -35,7 +35,7 @@ begin
 		variable m_addr : integer range 0 to ram_size - 1;	-- address to write/read
 		variable m_write : std_logic;				-- write flag
 		variable m_writedata : std_logic_vector (31 downto 0);	-- data needs to be written into memory
-		file memoryFile : text open write_mode is "memory.txt"; -- memory.txt initialization
+		file memoryFile : text; -- memory.txt file
 		variable outLine : line; 
 	begin
 		m_addr := to_integer(unsigned(alu_in));
@@ -70,10 +70,12 @@ begin
 			alu_res <= alu_in;
 		end if;
 		if (rising_edge(write_file_flag)) then			--if the proccess is over,all read/write requests are finished
+			file_open(memoryFile, "memory.txt", write_mode);
 			for index in 0 to ram_size-1 loop
 				write(outLine, ram_block(index));	-- write the data in each address of the ram into new line
 				writeline(memoryFile, outLine);
 			end loop;
+			file_close(memoryFile);
 		end if;
 	end process;
 

@@ -18,7 +18,9 @@ architecture arch of write_back is
 begin
 	process (clk, mem_res, alu_res, mem_flag)
 	begin
-		if falling_edge(clk) then
+		-- Use falling edge of clock to simulate the behaviour of writing back to the register
+		-- file before reading from it in the same clock cycle
+		if (falling_edge(clk)) then
 			case mem_flag is
 				when '0' => -- If flag is 0 then MUX takes the data in 0, so the result of ALU will be written back
 					write_data <= alu_res;
