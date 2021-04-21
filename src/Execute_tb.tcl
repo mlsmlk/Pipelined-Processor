@@ -27,8 +27,8 @@ proc AddWaves {} {
 vlib work
 
 ;# Compile components
-vcom Execute.vhd
-vcom Execute_tb.vhd
+vcom Execute.vhd -2008
+vcom Execute_tb.vhd -2008
 
 ;# Start simulation
 vsim Execute_tb
