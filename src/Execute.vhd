@@ -159,8 +159,8 @@ begin
                 end if;
             end if;
 
-            report std_logic_vector'image(readdata1);
-            report std_logic_vector'image(readdata2);
+            report to_hstring(readdata1);
+            report to_hstring(readdata2);
             report std_logic'image(d1_isforwarded);
             report std_logic'image(d2_isforwarded);
 
