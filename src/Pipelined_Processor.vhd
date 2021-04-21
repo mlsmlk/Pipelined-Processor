@@ -242,7 +242,7 @@ begin
     port map(
         -- Inputs
         clock,
-        e_insttype => r_e_insttype,
+        e_insttype,
         e_readdata1 => r_e_readdata1,
         e_readdata2 => r_e_readdata2,
         e_imm => r_e_imm,
