@@ -368,7 +368,7 @@ begin
         report "Store word";
         e_opcode <= SW;
         e_readdata1 <= std_logic_vector(to_unsigned(10, 32));
-        e_imm <= std_logic_vector(to_unsigned(-5, 32));
+        e_imm <= std_logic_vector(to_signed(-5, 32));
         wait for clock_period;
         assert (alu_result = std_logic_vector(to_unsigned(5, 32))) report "Expected result 5" severity error;
         assert (readwrite_flag = "10") report "ReadWrite flag should be set to write" severity error;
