@@ -63,9 +63,9 @@ begin
 			end if;
 
 			if (m_write = '1') then			 -- if there is a write request
-				ram_block(std_logic_vector(shift_right(unsigned(m_addr)), 2)) := m_writedata;-- define the data into given address of the memory
+				ram_block(m_addr / 4) := m_writedata;-- define the data into given address of the memory
 			end if;
-			mem_res <= ram_block(std_logic_vector(shift_right(unsigned(m_addr)), 2));		-- read the data from given address (it also confirms that the requested data is succesfully written in the write case)
+			mem_res <= ram_block(m_addr / 4);		-- read the data from given address (it also confirms that the requested data is succesfully written in the write case)
  			
 			alu_res <= alu_in;
 		end if;

@@ -148,7 +148,7 @@ begin
                 if(e_forwardop_mem="10") then
                     readdata1 := m_forward_data;
                     d1_isforwarded := '1';
-                elsif(e_forwardop_mem="10") then
+                elsif(e_forwardop_mem="01") then
                     readdata2 := m_forward_data;
                     d2_isforwarded := '1';
                 elsif(e_forwardop_mem="11") then
