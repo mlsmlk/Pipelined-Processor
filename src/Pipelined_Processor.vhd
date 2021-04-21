@@ -87,7 +87,10 @@ architecture arch of pipelined_processor is
             e_forward_mem : out std_logic;
             -- Indicate which operand the forwarded value from Memory maps to
             -- "10" = readdata1 || "01" = readdata2 || "11" = both
-            e_forwardop_mem : out std_logic_vector(1 downto 0)
+            e_forwardop_mem : out std_logic_vector(1 downto 0);
+            -- Signal to Execute whether to use memory value or previous ALU value
+            -- '0' = ALU value || '1' = memory value
+            e_forwardport_mem : out std_logic
         );
     end component;
 
@@ -118,8 +121,13 @@ architecture arch of pipelined_processor is
             -- Indicate which operand the forwarded value from Memory maps to
             -- "10" = readdata1 || "01" = readdata2 || "11" = both
             e_forwardop_mem : in std_logic_vector(1 downto 0);
-            -- Forwarded data from memory
-            m_forward_data : in std_logic_vector(31 downto 0);
+            -- Signal to Execute whether to use memory value or previous ALU value
+            -- '0' = ALU value || '1' = memory value
+            e_forwardport_mem : in std_logic;
+            -- Forwarded ALU data from memory output
+            m_forward_data_alu : in std_logic_vector(31 downto 0);
+            -- Forwarded mem data from memory output
+            m_forward_data_mem : in std_logic_vector(31 downto 0);
             
             --- OUTPUTS ---
             -- To the Memory stage
@@ -189,6 +197,7 @@ architecture arch of pipelined_processor is
     signal r_e_forwardop_ex : std_logic_vector(1 downto 0);
     signal r_e_forward_mem : std_logic;
     signal r_e_forwardop_mem : std_logic_vector(1 downto 0);
+    signal r_e_forwardport_mem : std_logic;
     signal r_readwrite_flag : std_logic_vector(1 downto 0);
     signal r_mem_flag : std_logic;
     signal r_alu_res : std_logic_vector(31 downto 0);
@@ -234,7 +243,8 @@ begin
         e_forward_ex => r_e_forward_ex,
         e_forwardop_ex => r_e_forwardop_ex,
         e_forward_mem => r_e_forward_mem,
-        e_forwardop_mem => r_e_forwardop_mem
+        e_forwardop_mem => r_e_forwardop_mem,
+        e_forwardport_mem => r_e_forwardport_mem
     );
 
     --- EXECUTE ---
@@ -253,7 +263,9 @@ begin
         e_forwardop_ex => r_e_forwardop_ex,
         e_forward_mem => r_e_forward_mem,
         e_forwardop_mem => r_e_forwardop_mem,
-        m_forward_data => r_mem_res,
+        e_forwardport_mem => r_e_forwardport_mem,
+        m_forward_data_alu => r_alu_res,
+        m_forward_data_mem => r_mem_res,
         -- Outputs
         alu_result => r_alu_in,
         writedata => r_mem_in,
