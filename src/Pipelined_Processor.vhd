@@ -180,6 +180,18 @@ architecture arch of pipelined_processor is
     signal r_mem_res : std_logic_vector(31 downto 0);
     signal r_alu_in : std_logic_vector(31 downto 0);
     signal r_mem_in : std_logic_vector(31 downto 0);
+    signal r_e_insttype : std_logic_vector (1 downto 0);
+    signal r_e_opcode : std_logic_vector(5 downto 0);
+    signal r_e_readdata1 : std_logic_vector(31 downto 0);
+    signal r_e_readdata2 : std_logic_vector(31 downto 0);
+    signal r_e_imm : std_logic_vector(31 downto 0);
+    signal r_e_forward_ex : std_logic;
+    signal r_e_forwardop_ex : std_logic_vector(1 downto 0);
+    signal r_e_forward_mem : std_logic;
+    signal r_e_forwardop_mem : std_logic_vector(1 downto 0);
+    signal r_readwrite_flag : std_logic_vector(1 downto 0);
+    signal r_mem_flag : std_logic;
+    signal r_alu_res : std_logic_vector(31 downto 0);
 
 begin
 
@@ -191,8 +203,8 @@ begin
     instf : fetch
     port map(
         -- Inputs
-        clock,
-        reset,
+        clock => clock,
+        reset => reset,
         jump_address => r_branch_target_addr,
         jump_flag => r_branch_taken,
         stall_pipeline => r_f_stall,
@@ -206,7 +218,7 @@ begin
     dec : decode
     port map(
         -- Inputs
-        clock,
+        clock => clock,
         write_reg_file => write_to_file,
         f_instruction => r_f_instruction,
         f_reset => r_f_reset,
@@ -214,15 +226,15 @@ begin
         w_regdata => r_write_data,
         -- Outputs
         f_stall => r_f_stall,
-        e_insttype,
-        e_opcode,
-        e_readdata1,
-        e_readdata2,
-        e_imm,
-        e_forward_ex,
-        e_forwardop_ex,
-        e_forward_mem,
-        e_forwardop_mem
+        e_insttype => r_e_insttype,
+        e_opcode => r_e_opcode,
+        e_readdata1 => r_e_readdata1,
+        e_readdata2 => r_e_readdata2,
+        e_imm => r_e_imm,
+        e_forward_ex => r_e_forward_ex,
+        e_forwardop_ex => r_e_forwardop_ex,
+        e_forward_mem => r_e_forward_mem,
+        e_forwardop_mem => r_e_forwardop_mem
     );
 
     --- EXECUTE ---
@@ -230,22 +242,22 @@ begin
     port map(
         -- Inputs
         clock,
-        e_insttype,
-        e_readdata1,
-        e_readdata2,
-        e_imm,
-        e_opcode,
+        e_insttype => r_e_insttype,
+        e_readdata1 => r_e_readdata1,
+        e_readdata2 => r_e_readdata2,
+        e_imm => r_e_imm,
+        e_opcode => r_e_opcode,
         f_reset => r_f_reset,
         f_nextPC => r_f_pcplus4,
-        e_forward_ex,
-        e_forwardop_ex,
-        e_forward_mem,
-        e_forwardop_mem,
+        e_forward_ex => r_e_forward_ex,
+        e_forwardop_ex => r_e_forwardop_ex,
+        e_forward_mem => r_e_forward_mem,
+        e_forwardop_mem => r_e_forwardop_mem,
         m_forward_data => r_mem_res,
         -- Outputs
         alu_result => r_alu_in,
         writedata => r_mem_in,
-        readwrite_flag,
+        readwrite_flag => r_readwrite_flag,
         branch_taken => r_branch_taken,
         branch_target_addr => r_branch_target_addr
     );
@@ -257,12 +269,12 @@ begin
         clock,
         alu_in => r_alu_in,
         mem_in => r_mem_in,
-        readwrite_flag,
+        readwrite_flag => r_readwrite_flag,
         write_file_flag => write_to_file,
         -- Outputs
-        mem_res,
-        mem_flag,
-        alu_res
+        mem_res => r_mem_res,
+        mem_flag => r_mem_flag,
+        alu_res => r_alu_res
     );
 
     --- WRITEBACK ---
@@ -270,9 +282,9 @@ begin
     port map(
         -- Inputs
         clk => clock,
-        mem_res,
-        alu_res,
-        mem_flag,
+        mem_res => r_mem_res,
+        alu_res => r_alu_res,
+        mem_flag => r_mem_flag,
         -- Outputs
         write_data => r_write_data
     );
