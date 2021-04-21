@@ -18,7 +18,7 @@ vcom Pipelined_Processor.vhd
 vcom Pipelined_Processor_tb.vhd
 
 ;# Start simulation
-vsim Pipelined_Processor_tb.vhd
+vsim Pipelined_Processor_tb
 
 ;# Generate a 1 ns period clock
 force -deposit clock 0 0 ns, 1 0.5 ns -repeat 1 ns
