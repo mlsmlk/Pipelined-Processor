@@ -75,7 +75,7 @@ architecture behavior of execute_tb is
             -- "10" = readdata1 || "01" = readdata2 || "11" = both
             e_forwardop_mem : in std_logic_vector(1 downto 0);
             -- Forwarded data from memory
-            e_forward_data : in std_logic_vector(31 downto 0);
+            m_forward_data : in std_logic_vector(31 downto 0);
 
             --- OUTPUTS ---
             -- To the Memory stage
@@ -101,7 +101,7 @@ architecture behavior of execute_tb is
     signal e_forwardop_ex : std_logic_vector (1 downto 0);
     signal e_forward_mem : std_logic;
     signal e_forwardop_mem: std_logic_vector (1 downto 0);
-    signal e_forward_data : std_logic_vector(31 downto 0);
+    signal m_forward_data : std_logic_vector(31 downto 0);
     signal f_reset : std_logic;
     signal f_nextPC : std_logic_vector(31 downto 0);
     
@@ -131,7 +131,7 @@ begin
         e_forwardop_ex => e_forwardop_ex,
         e_forward_mem => e_forward_mem,
         e_forwardop_mem => e_forwardop_mem,
-        e_forward_data => e_forward_data,
+        m_forward_data => m_forward_data,
         f_reset => f_reset,
         f_nextPC => f_nextPC,
         
