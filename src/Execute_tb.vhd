@@ -201,7 +201,7 @@ begin
         e_readdata1 <= std_logic_vector(to_unsigned(4, 32));
         e_readdata2 <= std_logic_vector(to_unsigned(2, 32));
         wait for clock_period;
-        report "Check the HI and LO signals to verify functionality. HI should be 2 and LO should be 0";
+        report "Check the HI and LO signals to verify functionality. HI should be 0 and LO should be 2";
         
         -- Set less than
         report "Set less than: ";
@@ -253,40 +253,40 @@ begin
         report "Move from HI: ";
         e_opcode <= MFHI;
         wait for clock_period;
-        assert (alu_result = std_logic_vector(to_unsigned(2, 32))) report "Expected result 2" severity error;
+        assert (alu_result = std_logic_vector(to_unsigned(0, 32))) report "Expected result 0" severity error;
         
         -- Move from LO
         report "Move from LO: ";
         e_opcode <= MFLO;
         wait for clock_period;
-        assert (alu_result = std_logic_vector(to_unsigned(0, 32))) report "Expected result 0" severity error;
+        assert (alu_result = std_logic_vector(to_unsigned(2, 32))) report "Expected result 2" severity error;
         
         --- Shift
         report "---------------Shift----------------";
         -- Shift left logical
         report "Shift left logical: ";
         e_opcode <= S_SLL;
-        e_readdata1 <= std_logic_vector(to_unsigned(1, 32));
-        e_readdata2 <= std_logic_vector(to_unsigned(3, 32));
+        e_readdata1 <= std_logic_vector(to_unsigned(3, 32));
+        e_readdata2 <= std_logic_vector(to_unsigned(1, 32));
         wait for clock_period;
         assert (alu_result = std_logic_vector(to_unsigned(8, 32))) report "Expected result 8" severity error;
         
         -- Shift right logical
         report "Shift right logical: ";
         e_opcode <= S_SRL;
-        e_readdata1 <= std_logic_vector(to_signed(-1, 32));
-        e_readdata2 <= std_logic_vector(to_unsigned(1, 32));
+        e_readdata1 <= std_logic_vector(to_unsigned(1, 32));
+        e_readdata2 <= std_logic_vector(to_signed(-1, 32));
         wait for clock_period;
-        assert (alu_result = std_logic_vector(to_signed(-2, 32))) report "Expected result -2" severity error;
+        assert (alu_result = "01111111111111111111111111111111") report "Expected result 2^31 - 1" severity error;
         
         -- Shift right arithmetic
         report "Shift right arithmetic: ";
         e_opcode <= S_SRA;
-        e_readdata1 <= std_logic_vector(to_signed(-1, 32));
-        e_readdata2 <= std_logic_vector(to_unsigned(1, 32));
+        e_readdata1 <= std_logic_vector(to_unsigned(4, 32));
+        e_readdata2 <= std_logic_vector(to_signed(-1, 32));
         wait for clock_period;
         assert (alu_result = std_logic_vector(to_signed(-1, 32))) report "Expected result -1" severity error;
-        
+
         --- Control-flow
         report "---------------Control-flow----------------";
         -- Jump register
@@ -315,7 +315,7 @@ begin
         --- Logical
         report "---------------Logical----------------";
         report "Set less than immediate: ";
-        e_opcode <= SLT;
+        e_opcode <= SLTI;
         e_readdata1 <= std_logic_vector(to_unsigned(1, 32));
         e_imm <= std_logic_vector(to_unsigned(0, 32));
         wait for clock_period;
