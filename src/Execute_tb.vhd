@@ -435,6 +435,7 @@ begin
         assert (branch_taken = '0') report "Branch should not be taken";
         
         -- Forward from execute to both operands
+        report "Forward from execute stage to both operands";
         e_opcode <= ADDI;
         e_forward_ex <= '1';
         e_forwardop_ex <= "11";
@@ -442,6 +443,7 @@ begin
         assert (alu_result = std_logic_vector(to_unsigned(4, 32))) report "Expected result 4" severity error;
 
         -- Forward from execute to one operand
+        report "Forward from execute stage to one operand";
         e_opcode <= ADDI;
         e_forward_ex <= '1';
         e_forwardop_ex <= "01";
@@ -450,6 +452,7 @@ begin
         assert (alu_result = std_logic_vector(to_unsigned(5, 32))) report "Expected result 5" severity error;
 
         -- Forward from execute and memory
+        report "Forward from execute and memory stage simultaneously";
         e_opcode <= ADDI;
         e_forward_ex <= '1';
         e_forwardop_ex <= "01";
