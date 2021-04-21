@@ -69,12 +69,10 @@ begin
  			
 			alu_res <= alu_in;
 		end if;
-		if (write_file_flag = '1') then			--if the proccess is over,all read/write requests are finished
+		if (rising_edge(write_file_flag)) then			--if the proccess is over,all read/write requests are finished
 			for index in 0 to ram_size-1 loop
-			-- if(index mod 4 = 0) then
-			write(outLine, ram_block(index));	-- write the data in each address of the ram into new line
-			writeline(memoryFile, outLine);
-			-- end if;
+				write(outLine, ram_block(index));	-- write the data in each address of the ram into new line
+				writeline(memoryFile, outLine);
 			end loop;
 		end if;
 	end process;

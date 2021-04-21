@@ -375,9 +375,9 @@ begin
                 sig_forward_ex <= '0';
                 sig_forward_mem <= '0';
 
-                -- If jump and link, update the link register with PC + 8
+                -- If jump and link, update the link register with PC + 4
                 if (opcode = JAL) then
-                    registers_var(LR_IDX) := std_logic_vector(unsigned(f_pcplus4) + 4);
+                    registers_var(LR_IDX) := f_pcplus4;
                 end if;
                 
                 -- Format the output address according to the specification
