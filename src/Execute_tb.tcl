@@ -12,20 +12,23 @@ proc AddWaves {} {
     add wave -position end  sim:/execute_tb/exec/e_forwardop_ex
     add wave -position end  sim:/execute_tb/exec/e_forward_mem
     add wave -position end  sim:/execute_tb/exec/e_forwardop_mem
-    add wave -position end  sim:/execute_tb/exec/e_forward_data
+    add wave -position end  sim:/execute_tb/exec/m_forward_data
 
     add wave -position end  sim:/execute_tb/exec/alu_result
     add wave -position end  sim:/execute_tb/exec/writedata
     add wave -position end  sim:/execute_tb/exec/readwrite_flag
     add wave -position end  sim:/execute_tb/exec/branch_taken
     add wave -position end  sim:/execute_tb/exec/branch_target_addr
+
+    add wave -position end  sim:/execute_tb/exec/HI
+    add wave -position end  sim:/execute_tb/exec/LO
 }
 
 vlib work
 
 ;# Compile components
-vcom Execute.vhd
-vcom Execute_tb.vhd
+vcom Execute.vhd -2008
+vcom Execute_tb.vhd -2008
 
 ;# Start simulation
 vsim Execute_tb
@@ -37,4 +40,4 @@ force -deposit clock 0 0 ns, 1 0.5 ns -repeat 1 ns
 AddWaves
 
 ;# Run for 25 ns
-run 25ns
+run 50ns
