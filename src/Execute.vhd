@@ -159,10 +159,10 @@ begin
                 end if;
             end if;
 
-            report readdata1;
-            report readdata2;
-            report d1_isforwarded;
-            report d2_isforwarded;
+            report std_logic_vector'image(readdata1);
+            report std_logic_vector'image(readdata2);
+            report std_logic'image(d1_isforwarded);
+            report std_logic'image(d2_isforwarded);
 
             -- If readdata1 or readdata2 is not forwarded, then use decode output
             if (d1_isforwarded = '0') then
