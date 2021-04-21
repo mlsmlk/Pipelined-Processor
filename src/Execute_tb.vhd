@@ -299,6 +299,7 @@ begin
         
         -- I-type rs=readdata1 rt=readdata2
         report "===========I-type instructions==========";
+        e_insttype <= "01";
         --- Arithmetic
         report "---------------Arithmetic----------------";
         -- AddI
@@ -400,6 +401,7 @@ begin
         
         -- J-type
         report "===========J-type instructions==========";
+        e_insttype <= "10";
         --- Control-flow
         report "---------------Control-flow----------------";
         -- Jump
@@ -422,6 +424,7 @@ begin
 
         -- Test forwarding
         report "===========Forwarding tests==========";
+        e_insttype <= "01";
         -- AddI
         report "ADDI: ";
         e_opcode <= ADDI;
