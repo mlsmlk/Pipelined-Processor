@@ -459,7 +459,8 @@ begin
         wait for clock_period;
         assert (alu_result = std_logic_vector(to_unsigned(3, 32))) report "Expected result 3" severity error;
     
-    report "End of testing";
+        report "End of testing";
+        wait;
     end process;
 
 end;
