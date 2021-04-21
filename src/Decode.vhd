@@ -51,7 +51,10 @@ entity decode is
         e_forward_mem : out std_logic;
         -- Indicate which operand the forwarded value from Memory maps to
         -- "10" = readdata1 || "01" = readdata2 || "11" = both
-        e_forwardop_mem : out std_logic_vector(1 downto 0)
+        e_forwardop_mem : out std_logic_vector(1 downto 0);
+        -- Signal to Execute whether to use memory value or previous ALU value
+        -- '0' = ALU value || '1' = memory value
+        e_forwardport_mem : out std_logic
     );
 end decode;
 
@@ -124,6 +127,7 @@ architecture arch of decode is
     signal sig_forwardop_ex : std_logic_vector(1 downto 0);
     signal sig_forward_mem : std_logic;
     signal sig_forwardop_mem : std_logic_vector(1 downto 0);
+    signal sig_forwardport_mem : std_logic;
     -- FUNCTIONS --
     impure function IS_HAZARD (reg : integer; writebackq : writeback_queue)
             return boolean is
@@ -215,6 +219,7 @@ begin
         variable op_ex : std_logic_vector(1 downto 0); -- Temporary variable for the execute operator
         variable forward_mem : std_logic;
         variable op_mem : std_logic_vector(1 downto 0); -- Temporary variable for the memory operator
+        variable next_wb_idx : natural range 0 to 2;
     begin
         -- Create an alias of the register file to allow the register file to be changed within CC
         registers_var := registers;
@@ -265,6 +270,18 @@ begin
 
             -- Assume no hazard exists until one is detected
             hazard_exists := '0';
+
+            -- Choose the memory forwarded port based on whether or not the instruction is a load
+            if (wb_queue_idx = 2) then
+                next_wb_idx := 0;
+            else
+                next_wb_idx := wb_queue_idx + 1;
+            end if;
+            if (is_load_queue(next_wb_idx) = '1') then
+                sig_forwardport_mem <= '1';
+            else
+                sig_forwardport_mem <= '0';
+            end if;
 
             -- Identify the type of the instruction
             opcode := instruction(31 downto 26);

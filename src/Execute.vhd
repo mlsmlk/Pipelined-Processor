@@ -28,9 +28,14 @@ entity execute is
         -- Indicate which operand the forwarded value from Memory maps to
         -- "10" = readdata1 || "01" = readdata2 || "11" = both
         e_forwardop_mem : in std_logic_vector(1 downto 0);
-        -- Forwarded data from memory
-        m_forward_data : in std_logic_vector(31 downto 0);
-        
+        -- Signal to Execute whether to use memory value or previous ALU value
+        -- '0' = ALU value || '1' = memory value
+        e_forwardport_mem : in std_logic;
+        -- Forwarded ALU data from memory output
+        m_forward_data_alu : in std_logic_vector(31 downto 0);
+        -- Forwarded mem data from memory output
+        m_forward_data_mem : in std_logic_vector(31 downto 0);
+
         --- OUTPUTS ---
         -- To the Memory stage
         alu_result : out std_logic_vector(31 downto 0);
@@ -146,15 +151,28 @@ begin
             -- Forwarding (memory)
             if(e_forward_mem='1') then
                 if(e_forwardop_mem="10") then
-                    readdata1 := m_forward_data;
+                    if (e_forwardport_mem = '0') then
+                        readdata1 := m_forward_data_alu;
+                    else
+                        readdata1 := m_forward_data_mem;
+                    end if;
                     d1_isforwarded := '1';
                 elsif(e_forwardop_mem="01") then
-                    readdata2 := m_forward_data;
+                    if (e_forwardport_mem = '0') then
+                        readdata2 := m_forward_data_alu;
+                    else
+                        readdata2 := m_forward_data_mem;
+                    end if;
                     d2_isforwarded := '1';
                 elsif(e_forwardop_mem="11") then
-                    readdata1 := m_forward_data;
+                    if (e_forwardport_mem = '0') then
+                        readdata1 := m_forward_data_alu;
+                        readdata2 := m_forward_data_alu;
+                    else
+                        readdata1 := m_forward_data_mem;
+                        readdata2 := m_forward_data_mem;
+                    end if;
                     d1_isforwarded := '1';
-                    readdata2 := m_forward_data;
                     d2_isforwarded := '1';
                 end if;
             end if;
