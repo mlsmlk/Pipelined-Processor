@@ -263,7 +263,7 @@ begin
         e_forwardop_ex => r_e_forwardop_ex,
         e_forward_mem => r_e_forward_mem,
         e_forwardop_mem => r_e_forwardop_mem,
-        e_forwardport_mem => e_forwardport_mem,
+        e_forwardport_mem => r_e_forwardport_mem,
         m_forward_data_alu => r_alu_res,
         m_forward_data_mem => r_mem_res,
         -- Outputs

@@ -277,11 +277,7 @@ begin
             else
                 next_wb_idx := wb_queue_idx + 1;
             end if;
-            if (is_load_queue(next_wb_idx) = '1') then
-                sig_forwardport_mem <= '1';
-            else
-                sig_forwardport_mem <= '0';
-            end if;
+            sig_forwardport_mem <= is_load_queue(next_wb_idx);
 
             -- Identify the type of the instruction
             opcode := instruction(31 downto 26);
@@ -528,4 +524,5 @@ begin
     e_forwardop_ex  <= sig_forwardop_ex;
     e_forward_mem   <= sig_forward_mem;
     e_forwardop_mem <= sig_forwardop_mem;
+	e_forwardport_mem <= sig_forwardport_mem;
 end arch;

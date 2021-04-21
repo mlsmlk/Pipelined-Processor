@@ -8,7 +8,7 @@ proc AddWaves {} {
 	add wave -position end  sim:/pipelined_processor_tb/proc/instf/jump_flag
 	add wave -position end  sim:/pipelined_processor_tb/proc/instf/stall_pipeline
 	add wave -position end  sim:/pipelined_processor_tb/proc/instf/instruction
-	add wave -position end  sim:/pipelined_processor_tb/proc/instf/program_counter_out
+	add wave -position end -radix decimal  sim:/pipelined_processor_tb/proc/instf/program_counter_out
 	add wave -position end  sim:/pipelined_processor_tb/proc/instf/reset_out
 	add wave -position end  sim:/pipelined_processor_tb/proc/dec/write_reg_file
 	add wave -position end  sim:/pipelined_processor_tb/proc/dec/w_regdata
@@ -22,7 +22,9 @@ proc AddWaves {} {
 	add wave -position end  sim:/pipelined_processor_tb/proc/dec/e_forwardop_ex
 	add wave -position end  sim:/pipelined_processor_tb/proc/dec/e_forward_mem
 	add wave -position end  sim:/pipelined_processor_tb/proc/dec/e_forwardop_mem
-	add wave -position end  sim:/pipelined_processor_tb/proc/ex/m_forward_data
+	add wave -position end  sim:/pipelined_processor_tb/proc/dec/e_forwardport_mem
+	add wave -position end  sim:/pipelined_processor_tb/proc/ex/m_forward_data_alu
+	add wave -position end  sim:/pipelined_processor_tb/proc/ex/m_forward_data_mem
 	add wave -position end  sim:/pipelined_processor_tb/proc/ex/alu_result
 	add wave -position end  sim:/pipelined_processor_tb/proc/ex/writedata
 	add wave -position end  sim:/pipelined_processor_tb/proc/ex/readwrite_flag
