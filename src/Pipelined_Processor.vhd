@@ -166,6 +166,21 @@ architecture arch of pipelined_processor is
         );
     end component;
 
+
+    -------------------------
+    -- SIGNAL DECLARATIONS --
+    -------------------------
+    signal r_branch_target_addr : std_logic_vector(31 downto 0);
+    signal r_branch_taken : std_logic;
+    signal r_f_stall : std_logic;
+    signal r_f_instruction : std_logic_vector(31 downto 0);
+    signal r_f_pcplus4 : std_logic_vector(31 downto 0);
+    signal r_f_reset : std_logic;
+    signal r_write_data : std_logic_vector(31 downto 0);
+    signal r_mem_res : std_logic_vector(31 downto 0);
+    signal r_alu_in : std_logic_vector(31 downto 0);
+    signal r_mem_in : std_logic_vector(31 downto 0);
+
 begin
 
     ------------------------------------
@@ -178,13 +193,13 @@ begin
         -- Inputs
         clock,
         reset,
-        jump_address => branch_target_addr,
-        jump_flag => branch_taken,
-        stall_pipeline => f_stall,
+        jump_address => r_branch_target_addr,
+        jump_flag => r_branch_taken,
+        stall_pipeline => r_f_stall,
         -- Outputs
-        instruction => f_instruction,
-        program_counter_out => f_pcplus4,
-        reset_out => f_reset
+        instruction => r_f_instruction,
+        program_counter_out => r_f_pcplus4,
+        reset_out => r_f_reset
     );
 
     --- DECODE ---
@@ -193,12 +208,12 @@ begin
         -- Inputs
         clock,
         write_reg_file => write_to_file,
-        f_instruction => instruction,
-        f_reset => reset_out,
-        f_pcplus4 => program_counter_out,
-        w_regdata => write_data,
+        f_instruction => r_f_instruction,
+        f_reset => r_f_reset,
+        f_pcplus4 => r_f_pcplus4,
+        w_regdata => r_write_data,
         -- Outputs
-        f_stall => stall_pipeline,
+        f_stall => r_f_stall,
         e_insttype,
         e_opcode,
         e_readdata1,
@@ -211,7 +226,7 @@ begin
     );
 
     --- EXECUTE ---
-    ex : decode
+    ex : execute
     port map(
         -- Inputs
         clock,
@@ -220,19 +235,19 @@ begin
         e_readdata2,
         e_imm,
         e_opcode,
-        f_reset => reset_out,
-        f_nextPC => program_counter_out,
+        f_reset => r_f_reset,
+        f_nextPC => r_f_pcplus4,
         e_forward_ex,
         e_forwardop_ex,
         e_forward_mem,
         e_forwardop_mem,
-        m_forward_data => mem_res,
+        m_forward_data => r_mem_res,
         -- Outputs
-        alu_result => alu_in,
-        writedata => mem_in,
+        alu_result => r_alu_in,
+        writedata => r_mem_in,
         readwrite_flag,
-        branch_taken => jump_flag,
-        branch_target_addr => jump_address
+        branch_taken => r_branch_taken,
+        branch_target_addr => r_branch_target_addr
     );
 
     --- MEMORY ---
@@ -240,8 +255,8 @@ begin
     port map(
         -- Inputs
         clock,
-        alu_in => alu_result,
-        mem_in => writedata,
+        alu_in => r_alu_in,
+        mem_in => r_mem_in,
         readwrite_flag,
         write_file_flag => write_to_file,
         -- Outputs
@@ -259,6 +274,6 @@ begin
         alu_res,
         mem_flag,
         -- Outputs
-        write_data => w_regdata
+        write_data => r_write_data
     );
 end;
