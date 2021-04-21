@@ -10,5 +10,5 @@ loop:   slti  $3, $1, 2         # n<2?
         mflo  $2                
         addi  $1, $1, -1        # n--
         j     loop              # loop
-end:	jr    $31               # return
+end:	j     end               # loop forever
 ###############################################
