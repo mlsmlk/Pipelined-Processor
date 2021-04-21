@@ -316,7 +316,7 @@ begin
                     -- Branch on equal
                     when BEQ =>
                         if(readdata1=readdata2) then
-                            sig_br_addr <= std_logic_vector(signed(f_nextPC) + signed(e_imm));
+                            sig_br_addr <= std_logic_vector(signed(f_nextPC) + signed(e_imm) - 4);
                             sig_br_flag <= '1';
                         else
                             sig_br_flag <= '0';
@@ -325,7 +325,7 @@ begin
                     -- Branch on not equal
                     when BNE =>
                         if(readdata1 /= readdata2) then 
-                            sig_br_addr <= std_logic_vector(signed(f_nextPC) + signed(e_imm));
+                            sig_br_addr <= std_logic_vector(signed(f_nextPC) + signed(e_imm) - 4);
                             sig_br_flag <= '1'; 
                         else
                             sig_br_flag <= '0';

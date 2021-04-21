@@ -18,10 +18,11 @@ ENTITY instruction_memory IS
 END instruction_memory;
 
 ARCHITECTURE rtl OF instruction_memory IS
-	TYPE MEM IS ARRAY(ram_size-1 downto 0) OF STD_LOGIC_VECTOR(7 downto 0);
+	TYPE MEM IS ARRAY(0 to ram_size-1) OF STD_LOGIC_VECTOR(7 downto 0);
 	SIGNAL ram_block: MEM;
 	SIGNAL read_address_reg: INTEGER RANGE 0 to ram_size-1;
 	signal lines_in_memory: integer range 0 to ram_size-1;
+	signal mem_initialized : std_logic := '0';
 BEGIN
 	--This is the main section of the SRAM model
     mem_process: PROCESS (clock)
@@ -32,7 +33,7 @@ BEGIN
 
 	BEGIN
 		--This is a cheap trick to initialize the SRAM in simulation
-        IF(now < 1 ps)THEN
+        IF(now < 1 ps and mem_initialized = '0')THEN
             -- Open the file, reading from 'program.txt'
             file_open(instructions_file, "program.txt", read_mode);
             while not endfile(instructions_file) LOOP
@@ -49,6 +50,7 @@ BEGIN
             END LOOP;
 			file_close(instructions_file);
 			lines_in_memory <= line_counter - 4;
+			mem_initialized <= '1';
 		end if;
 
 	END PROCESS;

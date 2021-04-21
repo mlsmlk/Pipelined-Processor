@@ -51,7 +51,7 @@ begin
     begin
         -- Reset the pipeline while the program file is loaded into memory
         reset <= '1';
-        wait for clock_period * 3;
+        wait for clock_period;
         reset <= '0';
 
         -- Run the processor for 10,000 clock cycles

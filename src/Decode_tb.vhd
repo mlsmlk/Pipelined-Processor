@@ -325,6 +325,12 @@ begin
         assert (e_opcode = "001111") report "Opcode was not 001111" severity error;
         assert (e_imm = "00000000000000001001000100100011") report "Immediate was not zero-extended" severity error;
 
+
+		-- Test reset
+		f_instruction <= "001000" & "00000" & "01010" & "0000000000000100";
+        f_pcplus4 <= std_logic_vector(pc + 4);
+		f_reset <= '1';
+		wait for clock_period * 4;
         -------------------------------------
         -- TEST PRINTING THE REGISTER FILE --
         -------------------------------------

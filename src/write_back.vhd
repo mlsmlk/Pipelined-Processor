@@ -18,7 +18,7 @@ architecture arch of write_back is
 begin
 	process (clk, mem_res, alu_res, mem_flag)
 	begin
-		if rising_edge(clk) then
+		if falling_edge(clk) then
 			case mem_flag is
 				when '0' => -- If flag is 0 then MUX takes the data in 0, so the result of ALU will be written back
 					write_data <= alu_res;

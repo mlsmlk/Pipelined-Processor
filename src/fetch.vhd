@@ -52,6 +52,7 @@ begin
     begin
         if (rising_edge(clock)) then
             if (reset = '1') then
+				reset_to_decode <= '1';
                 program_counter <= (others => '0');
             -- If we are not stalling then check if we are branching/jumping
             -- If stall, then do nothing
