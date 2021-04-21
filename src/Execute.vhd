@@ -29,7 +29,7 @@ entity execute is
         -- "10" = readdata1 || "01" = readdata2 || "11" = both
         e_forwardop_mem : in std_logic_vector(1 downto 0);
         -- Forwarded data from memory
-        e_forward_data : in std_logic_vector(31 downto 0);
+        m_forward_data : in std_logic_vector(31 downto 0);
         
         --- OUTPUTS ---
         -- To the Memory stage
@@ -146,15 +146,15 @@ begin
             -- Forwarding (memory)
             if(e_forward_mem='1') then
                 if(e_forwardop_mem="10") then
-                    readdata1 := e_forward_data;
+                    readdata1 := m_forward_data;
                     d1_isforwarded := '1';
                 elsif(e_forwardop_mem="10") then
-                    readdata2 := e_forward_data;
+                    readdata2 := m_forward_data;
                     d2_isforwarded := '1';
                 elsif(e_forwardop_mem="11") then
-                    readdata1 := e_forward_data;
+                    readdata1 := m_forward_data;
                     d1_isforwarded := '1';
-                    readdata2 := e_forward_data;
+                    readdata2 := m_forward_data;
                     d2_isforwarded := '1';
                 end if;
             end if;
