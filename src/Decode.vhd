@@ -183,14 +183,14 @@ begin
         file register_file : text;
         variable line_out : line;
     begin
-        file_open(register_file, "registers.txt", write_mode);
         if (rising_edge(write_reg_file)) then
+			file_open(register_file, "registers.txt", write_mode);
             for i in 0 to NUM_REGISTERS - 1 loop
                 write(line_out, registers(i));
                 writeline(register_file, line_out);
             end loop;
+			file_close(register_file);
         end if;
-        file_close(register_file);
     end process;
 
     decode_proc: process (clock, f_reset)
