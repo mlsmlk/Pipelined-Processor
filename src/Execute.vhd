@@ -28,9 +28,14 @@ entity execute is
         -- Indicate which operand the forwarded value from Memory maps to
         -- "10" = readdata1 || "01" = readdata2 || "11" = both
         e_forwardop_mem : in std_logic_vector(1 downto 0);
-        -- Forwarded data from memory
-        m_forward_data : in std_logic_vector(31 downto 0);
-        
+        -- Signal to Execute whether to use memory value or previous ALU value
+        -- '0' = ALU value || '1' = memory value
+        e_forwardport_mem : in std_logic;
+        -- Forwarded ALU data from memory output
+        m_forward_data_alu : in std_logic_vector(31 downto 0);
+        -- Forwarded mem data from memory output
+        m_forward_data_mem : in std_logic_vector(31 downto 0);
+
         --- OUTPUTS ---
         -- To the Memory stage
         alu_result : out std_logic_vector(31 downto 0);
@@ -146,20 +151,33 @@ begin
             -- Forwarding (memory)
             if(e_forward_mem='1') then
                 if(e_forwardop_mem="10") then
-                    readdata1 := m_forward_data;
+                    if (e_forwardport_mem = '0') then
+                        readdata1 := m_forward_data_alu;
+                    else
+                        readdata1 := m_forward_data_mem;
+                    end if;
                     d1_isforwarded := '1';
-                elsif(e_forwardop_mem="10") then
-                    readdata2 := m_forward_data;
+                elsif(e_forwardop_mem="01") then
+                    if (e_forwardport_mem = '0') then
+                        readdata2 := m_forward_data_alu;
+                    else
+                        readdata2 := m_forward_data_mem;
+                    end if;
                     d2_isforwarded := '1';
                 elsif(e_forwardop_mem="11") then
-                    readdata1 := m_forward_data;
+                    if (e_forwardport_mem = '0') then
+                        readdata1 := m_forward_data_alu;
+                        readdata2 := m_forward_data_alu;
+                    else
+                        readdata1 := m_forward_data_mem;
+                        readdata2 := m_forward_data_mem;
+                    end if;
                     d1_isforwarded := '1';
-                    readdata2 := m_forward_data;
                     d2_isforwarded := '1';
                 end if;
             end if;
 
-            -- If readdata1 or readdata2 is not forwarded, then use decode output
+            -- If readdata1 or readdata2 is not forwarded, then use Decode output
             if (d1_isforwarded = '0') then
                 readdata1 := e_readdata1;
             end if;
@@ -250,7 +268,8 @@ begin
                         sig_alu <= to_stdlogicvector(to_bitvector(readdata2) SRA to_integer(signed(readdata1)));
                         sig_br_flag <= '0';
                 -- Control-flow
-                    -- Jump register	-- branch_ddr = rs
+                    -- Jump register
+                    -- branch_addr = rs
                     when JR =>
                         sig_br_addr <= readdata1;
                         sig_br_flag <= '1';
@@ -316,7 +335,8 @@ begin
                     -- Branch on equal
                     when BEQ =>
                         if(readdata1=readdata2) then
-                            sig_br_addr <= std_logic_vector(signed(f_nextPC) + signed(e_imm));
+                            -- Subtract 4 to account for delay between clock cycles
+                            sig_br_addr <= std_logic_vector(signed(f_nextPC) + signed(e_imm) - 4);
                             sig_br_flag <= '1';
                         else
                             sig_br_flag <= '0';
@@ -324,8 +344,9 @@ begin
                         sig_rw_flag <= "00";
                     -- Branch on not equal
                     when BNE =>
-                        if(readdata1 /= readdata2) then 
-                            sig_br_addr <= std_logic_vector(signed(f_nextPC) + signed(e_imm));
+                        if(readdata1 /= readdata2) then
+                            -- Subtract 4 to account for delay between clock cycles
+                            sig_br_addr <= std_logic_vector(signed(f_nextPC) + signed(e_imm) - 4);
                             sig_br_flag <= '1'; 
                         else
                             sig_br_flag <= '0';
@@ -356,6 +377,7 @@ begin
 
     end process;
     
+    -- Assign signals to output
     alu_result <= sig_alu;
     writedata <= sig_writedata;
     readwrite_flag <= sig_rw_flag;

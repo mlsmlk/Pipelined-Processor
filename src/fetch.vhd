@@ -8,18 +8,26 @@ entity fetch is
     );
     port(
         --- INPUTS ---
-        -- Clock + PC
         clock : in std_logic;
         reset : in std_logic;
+
         -- From Execute stage
+        -- Address to jump to on the next clock cycle
         jump_address : in std_logic_vector(31 downto 0);
+        -- High if we should jump to jump_address
         jump_flag : in std_logic;
+
+        -- From Decode stage
+        -- High if the pipelined needs to stall
         stall_pipeline : in std_logic;
 
         --- OUTPUTS ---
         -- To Decode stage
+        -- Next instruction to be processed
         instruction : out std_logic_vector(31 downto 0);
+        -- PC + 4
         program_counter_out : out std_logic_vector(31 downto 0);
+        -- Reset to flush the pipeline (also sent to Execute)
         reset_out : out std_logic
     );
 end fetch;
@@ -28,8 +36,10 @@ architecture arch of fetch is
     -- Constants and signals to be defined
     signal program_counter : std_logic_vector(31 downto 0) := "00000000000000000000000000000000";
     signal reset_to_decode: std_logic := '0';
+    -- Next instruction read from instruction memory
     signal im_readdata : std_logic_vector(31 downto 0);
 
+    -- Component declaration
     component instruction_memory
         PORT (
             clock: in std_logic;
@@ -40,6 +50,7 @@ architecture arch of fetch is
 
 begin
 
+    -- Instance of instruction memory
     IM: instruction_memory
     port map (
         clock,
@@ -52,6 +63,7 @@ begin
     begin
         if (rising_edge(clock)) then
             if (reset = '1') then
+				reset_to_decode <= '1';
                 program_counter <= (others => '0');
             -- If we are not stalling then check if we are branching/jumping
             -- If stall, then do nothing

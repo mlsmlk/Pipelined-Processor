@@ -51,7 +51,10 @@ entity decode is
         e_forward_mem : out std_logic;
         -- Indicate which operand the forwarded value from Memory maps to
         -- "10" = readdata1 || "01" = readdata2 || "11" = both
-        e_forwardop_mem : out std_logic_vector(1 downto 0)
+        e_forwardop_mem : out std_logic_vector(1 downto 0);
+        -- Signal to Execute whether to use memory value or previous ALU value
+        -- '0' = ALU value || '1' = memory value
+        e_forwardport_mem : out std_logic
     );
 end decode;
 
@@ -124,8 +127,9 @@ architecture arch of decode is
     signal sig_forwardop_ex : std_logic_vector(1 downto 0);
     signal sig_forward_mem : std_logic;
     signal sig_forwardop_mem : std_logic_vector(1 downto 0);
+    signal sig_forwardport_mem : std_logic;
     -- FUNCTIONS --
-    impure function IS_HAZARD (reg : integer)
+    impure function IS_HAZARD (reg : integer; writebackq : writeback_queue)
             return boolean is
     begin
         -- A register-related hazard only occurs if
@@ -135,15 +139,15 @@ architecture arch of decode is
         -- AND
         -- (3) The target register is present in one of the other positions in the writeback queue
         if (wb_queue_idx = 0) then
-            return (reg /= 0) and (reg /= wb_queue(0)) and (reg = wb_queue(1) or reg = wb_queue(2));
+            return (reg /= 0) and (reg /= writebackq(0)) and (reg = writebackq(1) or reg = writebackq(2));
         elsif (wb_queue_idx = 1) then
-            return (reg /= 0) and (reg /= wb_queue(1)) and (reg = wb_queue(0) or reg = wb_queue(2));
+            return (reg /= 0) and (reg /= writebackq(1)) and (reg = writebackq(0) or reg = writebackq(2));
         else
-            return (reg /= 0) and (reg /= wb_queue(2)) and (reg = wb_queue(0) or reg = wb_queue(1));
+            return (reg /= 0) and (reg /= writebackq(2)) and (reg = writebackq(0) or reg = writebackq(1));
         end if;
     end function;
 
-    impure function CAN_FORWARD_EX(reg : integer)
+    impure function CAN_FORWARD_EX(reg : integer; writebackq : writeback_queue)
                 return boolean is
         variable prev_wb_idx : natural range 0 to 2 := 0;
     begin
@@ -155,10 +159,10 @@ architecture arch of decode is
         end if;
         -- If the instruction in Execute is going to write back to the target register, we can
         -- forward the value instead. The instruction cannot be a load instruction
-        return (wb_queue(prev_wb_idx) = reg) and (is_load_queue(prev_wb_idx) = '0');
+        return (writebackq(prev_wb_idx) = reg) and (is_load_queue(prev_wb_idx) = '0');
     end function;
 
-    impure function CAN_FORWARD_MEM(reg : integer)
+    impure function CAN_FORWARD_MEM(reg : integer; writebackq : writeback_queue)
                 return boolean is
         variable next_wb_idx : natural range 0 to 2 := 0;
     begin
@@ -170,20 +174,22 @@ architecture arch of decode is
         end if;
         -- If the instruction in Memory is going to write back to the target register, we can
         -- forward the value instead
-        return wb_queue(next_wb_idx) = reg;
+        return writebackq(next_wb_idx) = reg;
     end function;
 
 begin
     -- Prints out the register file when the flag is raised
     print_reg_file: process (write_reg_file)
-        file register_file : text open write_mode is "registers.txt";
+        file register_file : text;
         variable line_out : line;
     begin
         if (rising_edge(write_reg_file)) then
+			file_open(register_file, "registers.txt", write_mode);
             for i in 0 to NUM_REGISTERS - 1 loop
                 write(line_out, registers(i));
                 writeline(register_file, line_out);
             end loop;
+			file_close(register_file);
         end if;
     end process;
 
@@ -191,6 +197,8 @@ begin
         ----- VARIABLES -----
         -- Replica of the register file to help simplify the write back process
         variable registers_var : register_file;
+		-- Replica of writeback queue
+		variable var_wb_queue : writeback_queue;
         -- General instruction components
         variable instruction : std_logic_vector(31 downto 0);
         variable opcode : std_logic_vector(5 downto 0);
@@ -213,9 +221,12 @@ begin
         variable op_ex : std_logic_vector(1 downto 0); -- Temporary variable for the execute operator
         variable forward_mem : std_logic;
         variable op_mem : std_logic_vector(1 downto 0); -- Temporary variable for the memory operator
+        variable next_wb_idx : natural range 0 to 2;
     begin
         -- Create an alias of the register file to allow the register file to be changed within CC
         registers_var := registers;
+		-- Similarly for the writeback queue
+		var_wb_queue := wb_queue;
 
         -- If just starting, set all registers to 0
         if (now < 1 ps) then
@@ -225,7 +236,7 @@ begin
             end loop;
             -- Clear the queue
             for i in 0 to 2 loop
-                wb_queue(i) <= 0;
+                var_wb_queue(i) := 0;
                 is_load_queue(i) <= '0';
             end loop;
             wb_queue_idx <= 0;
@@ -241,15 +252,15 @@ begin
                 registers_var(0) := (others => '0');
                 -- Clear the queue
                 for i in 0 to 2 loop
-                    wb_queue(i) <= 0;
+                    var_wb_queue(i) := 0;
                     is_load_queue(i) <= '0';
                 end loop;
                 -- Clear forwarding signals
                 sig_forward_ex <= '0';
                 sig_forward_mem <= '0';
             -- Perform a writeback operation if necessary
-            elsif (wb_queue(wb_queue_idx) /= 0) then
-                registers_var(wb_queue(wb_queue_idx)) := w_regdata;
+            elsif (var_wb_queue(wb_queue_idx) /= 0) then
+                registers_var(var_wb_queue(wb_queue_idx)) := w_regdata;
             end if;
 
             -- If a stall is happening, use the stalled instruction, not the one shown by Fetch
@@ -261,6 +272,14 @@ begin
 
             -- Assume no hazard exists until one is detected
             hazard_exists := '0';
+
+            -- Choose the memory forwarded port based on whether or not the instruction is a load
+            if (wb_queue_idx = 2) then
+                next_wb_idx := 0;
+            else
+                next_wb_idx := wb_queue_idx + 1;
+            end if;
+            sig_forwardport_mem <= is_load_queue(next_wb_idx);
 
             -- Identify the type of the instruction
             opcode := instruction(31 downto 26);
@@ -282,13 +301,13 @@ begin
                 forward_mem := '0';
                 op_mem := "00";
 
-                if (IS_HAZARD(reg_s_idx)) then
+                if (IS_HAZARD(reg_s_idx, var_wb_queue)) then
                     -- Check to see if we can forward the value instead of stalling
-                    if (CAN_FORWARD_EX(reg_s_idx)) then
+                    if (CAN_FORWARD_EX(reg_s_idx, var_wb_queue)) then
                         -- Forward the execute output to the execute input
                         forward_ex := '1';
                         op_ex := "10";
-                    elsif (CAN_FORWARD_MEM(reg_s_idx)) then
+                    elsif (CAN_FORWARD_MEM(reg_s_idx, var_wb_queue)) then
                         -- Forward the memory output to the execute input
                         forward_mem := '1';
                         op_mem := "10";
@@ -299,13 +318,13 @@ begin
                         hazard_exists := '1';
                     end if;
                 end if;
-                if (IS_HAZARD(reg_t_idx)) then
+                if (IS_HAZARD(reg_t_idx, var_wb_queue)) then
                     -- Check to see if we can forward the value instead of stalling
-                    if (CAN_FORWARD_EX(reg_t_idx)) then
+                    if (CAN_FORWARD_EX(reg_t_idx, var_wb_queue)) then
                         -- Forward the execute output to the execute input
                         forward_ex := '1';
                         op_ex := op_ex or "01";
-                    elsif (CAN_FORWARD_MEM(reg_t_idx)) then
+                    elsif (CAN_FORWARD_MEM(reg_t_idx, var_wb_queue)) then
                         -- Forward the memory output to the execute input
                         forward_mem := '1';
                         op_mem := op_mem or "01";
@@ -340,9 +359,9 @@ begin
 
                     -- For all instructions other than jump register, set Rd as writeback
                     if (funct /= JR and funct /= MULT and funct /= DIV) then
-                        wb_queue(wb_queue_idx) <= reg_d_idx;
+                        var_wb_queue(wb_queue_idx) := reg_d_idx;
                     else
-                        wb_queue(wb_queue_idx) <= 0;
+                        var_wb_queue(wb_queue_idx) := 0;
                     end if;
 
                     -- Store the funct for forwarding purposes
@@ -358,16 +377,16 @@ begin
                 sig_forward_ex <= '0';
                 sig_forward_mem <= '0';
 
-                -- If jump and link, update the link register with PC + 8
+                -- If jump and link, update the link register with PC + 4
                 if (opcode = JAL) then
-                    registers_var(LR_IDX) := std_logic_vector(unsigned(f_pcplus4) + 4);
+                    registers_var(LR_IDX) := f_pcplus4;
                 end if;
                 
                 -- Format the output address according to the specification
                 sig_readdata1 <= f_pcplus4(31 downto 28) & address & "00";
                 
                 -- No write back for J-type instructions
-                wb_queue(wb_queue_idx) <= 0;
+                var_wb_queue(wb_queue_idx) := 0;
 
                 -- Store the opcode for forwarding purposes
                 is_load_queue(wb_queue_idx) <= '0';
@@ -385,16 +404,33 @@ begin
                 forward_mem := '0';
                 op_mem := "00";
 
-                if (IS_HAZARD(reg_s_idx)) then
+                if (IS_HAZARD(reg_s_idx, var_wb_queue)) then
                     -- Check to see if we can forward the value instead of stalling
-                    if (CAN_FORWARD_EX(reg_s_idx)) then
+                    if (CAN_FORWARD_EX(reg_s_idx, var_wb_queue)) then
                         -- Forward the execute output to the execute input
                         forward_ex := '1';
                         op_ex := "10";
-                    elsif (CAN_FORWARD_MEM(reg_s_idx)) then
+                    elsif (CAN_FORWARD_MEM(reg_s_idx, var_wb_queue)) then
                         -- Forward the memory output to the execute input
                         forward_mem := '1';
                         op_mem := "10";
+                    else
+                        -- Must stall
+                        forward_ex := '0';
+                        forward_mem := '0';
+                        hazard_exists := '1';
+                    end if;
+                end if;
+                if ((opcode = BEQ or opcode = BNE or opcode = SW) and IS_HAZARD(reg_t_idx, var_wb_queue)) then
+                    -- Check to see if we can forward the value instead of stalling
+                    if (CAN_FORWARD_EX(reg_t_idx, var_wb_queue)) then
+                        -- Forward the execute output to the execute input
+                        forward_ex := '1';
+                        op_ex := op_ex or "01";
+                    elsif (CAN_FORWARD_MEM(reg_t_idx, var_wb_queue)) then
+                        -- Forward the memory output to the execute input
+                        forward_mem := '1';
+                        op_mem := op_mem or "01";
                     else
                         -- Must stall
                         forward_ex := '0';
@@ -430,9 +466,10 @@ begin
 
                     -- Add writeback register to queue, if there is one
                     if (opcode /= BEQ and opcode /= BNE and opcode /= SW) then
-                        wb_queue(wb_queue_idx) <= reg_t_idx;
+                        var_wb_queue(wb_queue_idx) := reg_t_idx;
                     else
-                        wb_queue(wb_queue_idx) <= 0;
+                        var_wb_queue(wb_queue_idx) := 0;
+						sig_readdata2 <= registers_var(reg_t_idx);
                     end if;
 
                     -- If instruction is a load, take note for forwarding purposes
@@ -451,7 +488,7 @@ begin
                 sig_opcode <= ADDI;
                 sig_readdata1 <= (others => '0');
                 sig_imm <= (others => '0');
-                wb_queue(wb_queue_idx) <= 0;
+                var_wb_queue(wb_queue_idx) := 0;
                 is_load_queue(wb_queue_idx) <= '0';
 
                 -- Signal to the instruction fetch stage to stop processing instructions
@@ -474,6 +511,8 @@ begin
 
         -- Update the true register file with the temporary register file
         registers <= registers_var;
+		-- Similarly for the writeback queue
+		wb_queue <= var_wb_queue;
     end process;
 
     -- Assign registers to outputs
@@ -487,4 +526,5 @@ begin
     e_forwardop_ex  <= sig_forwardop_ex;
     e_forward_mem   <= sig_forward_mem;
     e_forwardop_mem <= sig_forwardop_mem;
+	e_forwardport_mem <= sig_forwardport_mem;
 end arch;

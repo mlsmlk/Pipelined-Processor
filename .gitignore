@@ -7,3 +7,5 @@ Assembler/*.asm
 *.bak
 *.wlf
 work
+wlft*
+src/*.txt
